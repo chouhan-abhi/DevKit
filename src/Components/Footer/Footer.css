@@ -3,7 +3,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 35px;
+  height: 32px;
   background-color: #2d2d2d;
   color: #ccc;
   display: flex;
@@ -19,7 +19,7 @@
 }
 .footer strong {
   color: #fff;
-  font-weight: 500;
+  font-weight: 400;
 }
 .github-link{
   position: fixed;

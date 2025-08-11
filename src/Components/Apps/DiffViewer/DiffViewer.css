@@ -1,9 +1,16 @@
 .diffviewer-container {
-  padding: 20px;
+  padding: 2rem;
   width: 88vw;
-  height: calc(100vh - 140px);
+  height: calc(100vh - 160px);
   border-radius: 8px;
-  border: 1px solid var(--glass-bg);
+  background-color: var(--glass-bg);
+  box-shadow: var(--shadow);
+}
+.diff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 button {
@@ -77,6 +84,7 @@ textarea {
   font-size: 14px;
   border-radius: 8px;
   box-sizing: border-box;
+  border: 1px dotted var(--shadow-color);
 }
 
 .diff-column {
@@ -85,6 +93,8 @@ textarea {
   background-color: var(--glass-bg);
   padding: 8px;
   border-radius: 8px;
+  border: 1px dotted var(--shadow-color);
+  height: 94%;
 }
 
 .diff-output-container {

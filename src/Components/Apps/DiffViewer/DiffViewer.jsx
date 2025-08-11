@@ -16,8 +16,8 @@ function CharLevelLine({ oldLine, newLine, lineType }) {
           const className = part.added
             ? "char-diff added"
             : part.removed
-            ? "char-diff removed"
-            : "";
+              ? "char-diff removed"
+              : "";
           return (
             <span key={i} className={className}>
               {part.value}
@@ -94,10 +94,16 @@ const DiffViewer = () => {
 
   return (
     <div className="diffviewer-container">
+
+      <div className="diff-header">
+        <b>Diff Editor</b>
+        <label>
+          Lines {countLines(text1)} - {countLines(text2)}
+        </label>
+      </div>
       <div className="diff-layout">
         <div className="text-column">
           <div className="text-box">
-            <label>Lines ({countLines(text1)})</label>
             <textarea
               value={text1}
               placeholder="Enter text here..."
@@ -105,12 +111,11 @@ const DiffViewer = () => {
             />
           </div>
           <div className="text-box">
-            <label>Lines ({countLines(text2)})</label>
             <textarea
               value={text2}
               placeholder="Enter text here..."
               onChange={(e) => setText2(e.target.value)}
-              />
+            />
           </div>
         </div>
         <div className="diff-column">

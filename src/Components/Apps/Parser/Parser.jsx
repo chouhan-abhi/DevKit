@@ -94,19 +94,23 @@ const JsonEditorViewer = () => {
     };
 
     return (
-        <>
+        <div className="flex flex-row page-wrapper">
+            <div className="toolbar">
+                <b>JSON Editor</b>
+                <div>
+                    <button onClick={beautifyJson}>Beautify</button>
+                    <button onClick={copyToClipboard}>Copy</button>
+                </div>
+            </div>
             <div className="json-editor-viewer">
                 <div className="main-section">
+
                     <textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         className={`json-input ${error ? "has-error" : ""}`}
                         spellCheck={false}
                     />
-                    <div className="toolbar">
-                        <button onClick={beautifyJson}>Beautify</button>
-                        <button onClick={copyToClipboard}>Copy</button>
-                    </div>
                 </div>
 
                 {error && <div className="error-msg">{error}</div>}
@@ -117,7 +121,7 @@ const JsonEditorViewer = () => {
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 };
 

@@ -1,19 +1,25 @@
+.page-wrapper {
+    box-shadow: var(--shadow);
+    padding: 20px;
+    border-radius: 8px;
+    background-color: var(--glass-bg);
+}
+
 .json-editor-viewer {
     display: flex;
     flex-direction: row;
     align-items: start;
     justify-content: space-between;
-    padding: 20px;
-    border: 1px solid var(--dot-color);
-    border-radius: 8px;
     display: flex;
     width: 88vw;
-    gap: 8px;
-    height: calc(100vh - 160px);
+    gap: 2vw;
+    height: calc(100vh - 180px);
 }
 
 .toolbar {
-    margin-top: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .toolbar button {
@@ -33,13 +39,15 @@
 }
 
 .json-input {
-    height: 72vh;
+    height: 79vh;
     font-size: 14px;
     padding: 10px;
     white-space: pre;
     border-radius: 8px;
     resize: none;
     overflow-y: auto;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--dot-color);
 }
 
 .has-error {
@@ -47,6 +55,7 @@
 }
 
 .error-msg {
+    border: 1px solid red;
     color: red;
 }
 
@@ -57,8 +66,8 @@
     border-radius: 8px;
     overflow-x: auto;
     width: 38vw;
-    height: 72vh;
-    border: 1px solid var(--shadow-color);
+    height: 80vh;
+    border: 1px solid var(--dot-color);
 }
 
 .key {

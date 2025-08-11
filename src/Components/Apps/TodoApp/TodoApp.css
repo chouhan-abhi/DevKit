@@ -9,6 +9,7 @@
 /* Pomodoro Section */
 .pomodoro {
   background: var(--glass-bg);
+  border: 1px dotted var(--shadow-color);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
@@ -53,7 +54,7 @@ button:hover {
   display: flex;
   gap: 8px;
   flex-direction: column;
-  border: 1px solid var(--shadow-color);
+  border: 1px dotted var(--shadow-color);
   border-radius: 25px;
   padding: 8px;
   width: 40vw;

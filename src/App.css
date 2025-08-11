@@ -2,11 +2,12 @@
   --bg-color: #f5f7fa;
   --text-color: #333;
   --dot-color: rgba(0, 0, 0, 0.2);
-  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(248, 248, 248, 0.8);
   --input-background: #ffffff;
   --section-background: #ffffff;
   --shadow-color: rgba(31, 38, 135, 0.2);
   --primary-color: #ff6b6b;
+  --shadow: 0 8px 16px var(--dot-color);
 }
 
 body {
@@ -24,7 +25,7 @@ body {
 body.dark {
   --bg-color: #121212;
   --text-color: #f0f0f0;
-  --glass-bg: rgba(48, 48, 48, 0.8);
+  --glass-bg: rgba(21, 21, 21, 0.8);
   --dot-color: rgba(192, 192, 192, 0.15);
   --section-background: #000000;
   --shadow-color: rgba(86, 86, 86, 0.32);
@@ -72,7 +73,7 @@ body.dark {
   width: 96px;
   background-color: var(--section-background);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 16px var(--shadow-color);
+  box-shadow: 0 8px 32px var(--shadow-color);
   border-radius: 8px;
   flex-direction: column;
   text-align: center;
@@ -88,10 +89,9 @@ body.dark {
 
 .tile:hover {
   transform: rotateY(15deg) rotateX(10deg) scale(1.05);
-  height: 100px;
-  width: 100px;
-  border-bottom: 2px solid var(--primary-color);
-  box-shadow: 0 12px 32px var(--shadow-color);
+  height: 98px;
+  width: 98px;
+  box-shadow: 0 8px 16px var(--shadow-color);
 }
 
 @keyframes fadeInUp {
@@ -120,5 +120,5 @@ body.dark {
   align-items: center;
   justify-content: center;
   overflow-y: auto;
-  animation: softFadeIn 0.6s ease-out;
+  animation: softFadeIn 0.3s ease-out;
 }
