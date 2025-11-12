@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import DiffMatchPatch from "diff-match-patch";
+import { themeManager } from "../utils/themeManger";
 
 export default function DualEditableDiff() {
   const dmp = new DiffMatchPatch();
@@ -13,6 +14,19 @@ export default function DualEditableDiff() {
 
   const [leftCode, setLeftCode] = useState("// Left editor");
   const [rightCode, setRightCode] = useState("// Right editor");
+  
+  // Get initial theme and convert to Monaco theme format
+  const getMonacoTheme = (theme) => {
+    const resolvedTheme = theme === "system" 
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : theme;
+    return resolvedTheme === "dark" ? "vs-dark" : "vs-light";
+  };
+  
+  const [monacoTheme, setMonacoTheme] = useState(() => {
+    const currentTheme = themeManager.getTheme();
+    return getMonacoTheme(currentTheme);
+  });
 
   const createRange = (model, start, end) => {
     const s = model.getPositionAt(start);
@@ -97,7 +111,7 @@ export default function DualEditableDiff() {
   useEffect(() => {
     const handler = (e) => {
       const theme = e.detail === "dark" ? "vs-dark" : "vs-light";
-      monaco.editor.setTheme(theme);
+      setMonacoTheme(theme);
     };
 
     window.addEventListener("theme-changed", handler);
@@ -106,15 +120,17 @@ export default function DualEditableDiff() {
 
 
   return (
-    <div className="grid grid-cols-2 h-screen gap-2 p-2 bg-[#0d0d0d]">
+    <div className="grid grid-cols-2 h-screen gap-2 p-2 bg-(--bg-color)">
 
       {/* ✅ LEFT EDITOR (shows removed text in red) */}
       <Editor
         height="100%"
         language="javascript"
-        theme="vs-dark"
+        theme={monacoTheme}
         value={leftCode}
-        onMount={(editor) => (leftRef.current = editor)}
+        onMount={(editor) => {
+          leftRef.current = editor;
+        }}
         onChange={(v) => onLeftChange(v ?? "")}
       />
 
@@ -122,9 +138,11 @@ export default function DualEditableDiff() {
       <Editor
         height="100%"
         language="javascript"
-        theme="vs-dark"
+        theme={monacoTheme}
         value={rightCode}
-        onMount={(editor) => (rightRef.current = editor)}
+        onMount={(editor) => {
+          rightRef.current = editor;
+        }}
         onChange={(v) => onRightChange(v ?? "")}
       />
 

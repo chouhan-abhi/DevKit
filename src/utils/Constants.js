@@ -1,8 +1,8 @@
 export const appList = [
   {
     key: "",
-    label: "Home",
-    description: "Home Page",
+    label: "Devkit Home",
+    description: "Devkit Home, Host of all your development needs.",
     icon: "PocketKnife"
   },
   {

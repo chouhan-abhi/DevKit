@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import { JsonView, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import { AlertCircle, CheckCircle, Code, Minimize2 } from "lucide-react";
+import { themeManager } from "../utils/themeManger";
 
 const JsonEditor = () => {
   const initialJson = "{\n  \"name\": \"Abhishek\",\n  \"age\": 24\n}";
@@ -17,17 +18,27 @@ const JsonEditor = () => {
   });
   const [error, setError] = useState(null);
 
-  // Detect Dark Mode
-  const [isDark, setIsDark] = useState(
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
+  // Get initial theme and convert to Monaco theme format
+  const getMonacoTheme = (theme) => {
+    const resolvedTheme = theme === "system" 
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : theme;
+    return resolvedTheme === "dark" ? "vs-dark" : "vs-light";
+  };
+  
+  const [monacoTheme, setMonacoTheme] = useState(() => {
+    const currentTheme = themeManager.getTheme();
+    return getMonacoTheme(currentTheme);
+  });
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const listener = (e) => setIsDark(e.matches);
+    const handler = (e) => {
+      const theme = e.detail === "dark" ? "vs-dark" : "vs-light";
+      setMonacoTheme(theme);
+    };
 
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
+    window.addEventListener("theme-changed", handler);
+    return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
   const handleEditorChange = (value) => {
@@ -119,7 +130,7 @@ const JsonEditor = () => {
           {/* Monaco Editor */}
           <Editor
             height="100%"
-            theme={isDark ? "vs-dark" : "vs-light"}
+            theme={monacoTheme}
             language="json"
             value={jsonText}
             onChange={handleEditorChange}
