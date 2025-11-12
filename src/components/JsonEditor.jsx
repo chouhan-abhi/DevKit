@@ -1,50 +1,64 @@
 import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
-import { JsonView, defaultStyles } from "react-json-view-lite";
+import { JsonView, darkStyles, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import { AlertCircle, CheckCircle, Code, Minimize2 } from "lucide-react";
 import { themeManager } from "../utils/themeManger";
+import { storage } from "../utils/StorageManager";
 
 const JsonEditor = () => {
-  const initialJson = "{\n  \"name\": \"Abhishek\",\n  \"age\": 24\n}";
+  const STORAGE_KEY = "json-editor-content";
 
-  const [jsonText, setJsonText] = useState(initialJson);
+  const fallbackJson = "{\n  \"name\": \"User\",\n  \"age\": 24\n}";
+  const savedJson = storage.get(STORAGE_KEY, fallbackJson);
+
+  const [jsonText, setJsonText] = useState(savedJson);
   const [jsonObj, setJsonObj] = useState(() => {
     try {
-      return JSON.parse(initialJson);
+      return JSON.parse(savedJson);
     } catch {
       return null;
     }
   });
   const [error, setError] = useState(null);
 
-  // Get initial theme and convert to Monaco theme format
-  const getMonacoTheme = (theme) => {
-    const resolvedTheme = theme === "system" 
-      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-      : theme;
-    return resolvedTheme === "dark" ? "vs-dark" : "vs-light";
+  // ✅ Determine theme modes
+  const getThemeMode = (theme) => {
+    const resolved =
+      theme === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : theme;
+    return resolved;
   };
-  
-  const [monacoTheme, setMonacoTheme] = useState(() => {
-    const currentTheme = themeManager.getTheme();
-    return getMonacoTheme(currentTheme);
-  });
 
+  const [themeMode, setThemeMode] = useState(getThemeMode(themeManager.getTheme()));
+
+  // ✅ Monaco theme mapping
+  const getMonacoTheme = (mode) => (mode === "dark" ? "vs-dark" : "vs-light");
+  const [monacoTheme, setMonacoTheme] = useState(getMonacoTheme(themeMode));
+
+  // ✅ React to theme changes
   useEffect(() => {
     const handler = (e) => {
-      const theme = e.detail === "dark" ? "vs-dark" : "vs-light";
-      setMonacoTheme(theme);
+      const mode = e.detail;
+      setThemeMode(mode);
+      setMonacoTheme(getMonacoTheme(mode));
     };
-
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
+  // ✅ Persist code
+  useEffect(() => {
+    storage.set(STORAGE_KEY, jsonText);
+  }, [jsonText]);
+
+  // ✅ Editor change
   const handleEditorChange = (value) => {
     const safeVal = value ?? "";
     setJsonText(safeVal);
-
     try {
       const parsed = JSON.parse(safeVal);
       setJsonObj(parsed);
@@ -54,6 +68,7 @@ const JsonEditor = () => {
     }
   };
 
+  // ✅ JSON format + minify
   const formatJson = () => {
     try {
       const parsed = JSON.parse(jsonText);
@@ -76,15 +91,16 @@ const JsonEditor = () => {
     }
   };
 
+  // ✅ Choose correct JsonView style
+  const jsonViewStyle = themeMode === "dark" ? darkStyles : defaultStyles;
+
   return (
     <div
       className="h-full w-full flex flex-col"
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
-      {/* MAIN BODY */}
       <div className="flex flex-1 rounded-lg overflow-hidden shadow-sm">
-
-        {/* LEFT SIDE - JSON Editor */}
+        {/* Left: JSON Editor */}
         <div
           className="flex-1 flex flex-col border-r"
           style={{ borderColor: "var(--border)" }}
@@ -110,7 +126,6 @@ const JsonEditor = () => {
               <Minimize2 size={16} /> Minify
             </button>
 
-            {/* Status Icon */}
             <div className="ml-auto">
               {error ? (
                 <span className="flex items-center gap-1 text-red-600 text-sm">
@@ -146,9 +161,9 @@ const JsonEditor = () => {
           />
         </div>
 
-        {/* RIGHT SIDE - JSON Preview */}
+        {/* Right: JSON Preview */}
         <div
-          className="w-[40%] overflow-auto p-6 border-l"
+          className="w-[40%] overflow-auto p-6"
           style={{ background: "var(--panel)", borderColor: "var(--border)" }}
         >
           <h2
@@ -161,7 +176,15 @@ const JsonEditor = () => {
           {error ? (
             <p className="text-red-600 text-sm">{error}</p>
           ) : (
-            <JsonView data={jsonObj} style={defaultStyles} />
+            <div
+              style={{
+                borderRadius: "8px",
+                background: "var(--bg)",
+                padding: "10px",
+              }}
+            >
+              <JsonView data={jsonObj} style={jsonViewStyle} />
+            </div>
           )}
         </div>
       </div>

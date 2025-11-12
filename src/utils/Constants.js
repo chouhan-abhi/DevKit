@@ -2,38 +2,44 @@ export const appList = [
   {
     key: "",
     label: "Devkit Home",
-    description: "Devkit Home, Host of all your development needs.",
-    icon: "PocketKnife"
+    description: "Central dashboard for all your Devkit tools and utilities.",
+    icon: "PocketKnife", // versatile toolkit symbol
   },
   {
     key: "tasks",
     label: "Todo Tasks",
-    description: "View overview and manage your tasks",
-    icon: "ListChecks" // clean task manager icon
+    description: "Organize, track, and manage your daily development tasks.",
+    icon: "ListChecks", // task manager / checklist
+  },
+  {
+    key: "js-ide",
+    label: "JavaScript IDE",
+    description: "Write, run, and debug JavaScript code directly in your browser.",
+    icon: "Code", // developer / coding symbol
   },
   {
     key: "diff-editor",
     label: "Code Diff Viewer",
-    description: "View and compare code changes",
-    icon: "GitCompare" // perfect diff/code compare icon
+    description: "Compare two code versions and visualize differences side by side.",
+    icon: "GitCompare", // diff / merge visualization
   },
   {
     key: "JSON",
     label: "JSON Viewer",
-    description: "View and edit JSON data",
-    icon: "Braces" // JSON / code format braces
+    description: "View, format, and edit JSON data with syntax highlighting.",
+    icon: "Braces", // structured data / JSON braces
   },
   {
     key: "settings",
     label: "Settings",
-    description: "Configure your preferences",
-    icon: "Settings"
-  }
+    description: "Customize your themes, preferences, and development environment.",
+    icon: "Settings", // gear/settings symbol
+  },
 ];
 
 export const DEFAULT_QUERY_OPTIONS = {
-    refetchOnWindowFocus: false,
-    retry: 1,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
-  }
+  refetchOnWindowFocus: false,
+  retry: 1,
+  staleTime: 1000 * 60 * 60, // 1 hour
+  gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
+};

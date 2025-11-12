@@ -16,6 +16,7 @@ const Settings = lazy(() => import("./components/Settings"));
 const TodoList = lazy(() => import("./components/TodoList"));
 const CodeDiffViewer = lazy(() => import("./components/DiffEditor"));
 const JsonEditor = lazy(() => import("./components/JsonEditor"));
+const JSIDEApp = lazy(() => import("./components/codestash/JSIDEApp"));
 
 function App() {
 	// Initialize theme on mount
@@ -77,6 +78,7 @@ function App() {
 							<Route path="/" element={<Home />} />
 							<Route path="/dashboard" element={<Dashboard />} />
 							<Route path="/tasks" element={<TodoList />} />
+							<Route path="/js-ide" element={<JSIDEApp />} />
 							<Route path="/diff-editor" element={<CodeDiffViewer />} />
 							<Route path="/JSON" element={<JsonEditor />} />
 							<Route path="/settings" element={<Settings />} />
