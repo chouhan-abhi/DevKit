@@ -7,6 +7,7 @@ import Loader from "./utils/Loader";
 
 import { themeManager } from "./utils/themeManger";
 import AppHeader from "./components/AppHeader";
+import { useQuote } from "./hooks/useQuote";
 
 // ✅ Lazy-loaded screens
 const Home = lazy(() => import("./components/Home"));
@@ -21,6 +22,7 @@ function App() {
 	useEffect(() => {
 		themeManager.init();
 	}, []);
+	useQuote();
 
 	return (
 		<div className="w-full h-screen bg-(--bg-color) font-inter overflow-hidden">

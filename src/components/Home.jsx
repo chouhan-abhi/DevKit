@@ -1,5 +1,6 @@
 import { appList } from "../utils/Constants";
 import AppCard from "../components/AppCard";
+import Quotes from "./Quotes";
 
 export default function Home() {
   return (
@@ -29,6 +30,7 @@ export default function Home() {
             <AppCard key={app.key} app={app} />
           ))}
       </div>
+      <Quotes />
     </div>
   );
 }

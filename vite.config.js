@@ -8,4 +8,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api/quote': {
+        target: 'https://zenquotes.io',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/quote/, '/api/today'),
+      },
+    },
+  },
 })
