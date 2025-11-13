@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import React, { useState, useEffect, useRef, lazy } from "react";
+const  Editor = lazy(() => import("@monaco-editor/react"));
 import { 
   Save, 
   FileText, 
@@ -8,16 +8,36 @@ import {
   Upload,
   X,
   Eye,
-  Edit
+  Edit,
+  FileDown,
+  FileSpreadsheet,
+  Copy,
+  Check,
+  Sparkles
 } from "lucide-react";
 import { storage } from "../utils/StorageManager";
 import { themeManager } from "../utils/themeManger";
 
-// Simple markdown to HTML converter (basic implementation)
+// Enhanced markdown to HTML converter with CSS parsing
 const markdownToHtml = (markdown) => {
   if (!markdown) return "";
   
-  return markdown
+  let html = markdown;
+  
+  // Extract and parse CSS styles from <style> tags
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+  const styles = [];
+  let styleMatch = styleRegex.exec(markdown);
+  while (styleMatch !== null) {
+    styles.push(styleMatch[1]);
+    styleMatch = styleRegex.exec(markdown);
+  }
+  
+  // Remove style tags from markdown before processing
+  html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  // Process markdown
+  html = html
     // Headers
     .replace(/^### (.*$)/gim, "<h3>$1</h3>")
     .replace(/^## (.*$)/gim, "<h2>$1</h2>")
@@ -36,6 +56,14 @@ const markdownToHtml = (markdown) => {
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, '<img alt="$1" src="$2" />')
     // Line breaks
     .replace(/\n/gim, "<br />");
+  
+  // Inject parsed CSS styles
+  if (styles.length > 0) {
+    const styleTag = `<style>${styles.join('\n')}</style>`;
+    html = styleTag + html;
+  }
+  
+  return html;
 };
 
 const MarkdownEditor = () => {
@@ -49,11 +77,26 @@ const MarkdownEditor = () => {
     return storage.get("markdown:files", []);
   });
   
+  // Restore current file ID and name from storage
+  const [currentFileId, setCurrentFileId] = useState(() => {
+    return storage.get("markdown:currentFileId", null);
+  });
+  
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
-  const [fileName, setFileName] = useState("");
+  const [fileName, setFileName] = useState(() => {
+    const savedFileId = storage.get("markdown:currentFileId", null);
+    if (savedFileId) {
+      const savedFiles = storage.get("markdown:files", []);
+      const file = savedFiles.find(f => f.id === savedFileId);
+      return file?.name || "";
+    }
+    return "";
+  });
   const [showFilesDropdown, setShowFilesDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [currentFileId, setCurrentFileId] = useState(null); // Track currently loaded file
+  const [copied, setCopied] = useState(false);
+  const hasRestoredFile = useRef(false);
 
   // Get initial theme and convert to Monaco theme format
   const getMonacoTheme = (theme) => {
@@ -90,13 +133,28 @@ const MarkdownEditor = () => {
         );
         setSavedFiles(updatedFiles);
         storage.set("markdown:files", updatedFiles);
+        // Save current file ID for persistence
+        storage.set("markdown:currentFileId", currentFileId);
       } else {
         storage.set("markdown:current", markdown);
+        storage.remove("markdown:currentFileId");
       }
     }, 1000); // Debounce auto-save
 
     return () => clearTimeout(timer);
   }, [markdown, currentFileId, savedFiles]);
+  
+  // Restore file content when currentFileId is loaded from storage (only once on mount)
+  useEffect(() => {
+    if (!hasRestoredFile.current && currentFileId && savedFiles.length > 0) {
+      const file = savedFiles.find(f => f.id === currentFileId);
+      if (file) {
+        setMarkdown(file.content);
+        setFileName(file.name);
+        hasRestoredFile.current = true;
+      }
+    }
+  }, [currentFileId, savedFiles]);
 
   const handleSave = () => {
     if (!fileName.trim()) {
@@ -145,6 +203,7 @@ const MarkdownEditor = () => {
 
     setSavedFiles(updatedFiles);
     storage.set("markdown:files", updatedFiles);
+    storage.set("markdown:currentFileId", fileData.id);
     setShowSaveDropdown(false);
     setFileName("");
   };
@@ -159,6 +218,7 @@ const MarkdownEditor = () => {
     setMarkdown(file.content);
     setCurrentFileId(file.id);
     setFileName(file.name);
+    storage.set("markdown:currentFileId", file.id);
     setShowFilesDropdown(false);
   };
 
@@ -166,6 +226,7 @@ const MarkdownEditor = () => {
     setMarkdown(initialMarkdown);
     setCurrentFileId(null);
     setFileName("");
+    storage.remove("markdown:currentFileId");
     setShowSaveDropdown(false);
     setShowFilesDropdown(false);
   };
@@ -176,22 +237,84 @@ const MarkdownEditor = () => {
       const updatedFiles = savedFiles.filter(f => f.id !== id);
       setSavedFiles(updatedFiles);
       storage.set("markdown:files", updatedFiles);
+      if (currentFileId === id) {
+        setCurrentFileId(null);
+        setFileName("");
+        setMarkdown(initialMarkdown);
+        storage.remove("markdown:currentFileId");
+      }
     }
   };
 
-  const handleExport = () => {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
+  const handleExport = (format = "md") => {
     const currentFileName = currentFileId 
       ? savedFiles.find(f => f.id === currentFileId)?.name || fileName || "markdown"
       : fileName || "markdown";
-    a.download = `${currentFileName}.md`;
+    
+    let content = markdown;
+    let mimeType = "text/markdown";
+    let extension = "md";
+    
+    if (format === "doc") {
+      // Convert markdown to HTML for DOC format
+      const htmlContent = markdownToHtml(markdown);
+      content = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${currentFileName}</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+    h1 { color: #333; border-bottom: 2px solid #333; }
+    h2 { color: #555; border-bottom: 1px solid #ddd; }
+    h3 { color: #777; }
+    code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+    pre { background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    a { color: #007bff; }
+  </style>
+</head>
+<body>
+${htmlContent.replace(/<style>[\s\S]*?<\/style>/gi, '')}
+</body>
+</html>`;
+      mimeType = "text/html";
+      extension = "html";
+    } else if (format === "csv") {
+      // Convert markdown tables to CSV
+      const tableRegex = /\|(.+)\|/g;
+      const lines = markdown.split('\n');
+      const csvLines = [];
+      
+      for (const line of lines) {
+        if (line.trim().startsWith('|') && line.includes('---')) {
+          continue; // Skip separator rows
+        }
+        if (line.trim().startsWith('|')) {
+          const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+          csvLines.push(cells.join(','));
+        }
+      }
+      
+      if (csvLines.length > 0) {
+        content = csvLines.join('\n');
+      } else {
+        // If no tables, create a simple CSV with the content
+        content = `Content\n"${markdown.replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+      }
+      mimeType = "text/csv";
+      extension = "csv";
+    }
+    
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${currentFileName}.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setShowExportDropdown(false);
   };
 
   const handleImport = (e) => {
@@ -216,11 +339,162 @@ const MarkdownEditor = () => {
       if (!event.target.closest('.files-dropdown-container') && !event.target.closest('button[data-files-button]')) {
         setShowFilesDropdown(false);
       }
+      if (!event.target.closest('.export-dropdown-container') && !event.target.closest('button[data-export-button]')) {
+        setShowExportDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  // Check if save button should be active
+  const isSaveActive = currentFileId || fileName.trim().length > 0;
+
+  const handleCopyToClipboard = async () => {
+    try {
+      // Copy the markdown text content
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = markdown;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (fallbackErr) {
+        console.error('Failed to copy:', fallbackErr);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const formatMarkdown = () => {
+    // Split into lines
+    const lines = markdown.split('\n');
+    const formattedLines = [];
+    let inCodeBlock = false;
+    let codeBlockLanguage = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      
+      // Handle code blocks
+      if (trimmed.startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        if (inCodeBlock) {
+          codeBlockLanguage = trimmed.substring(3).trim();
+        }
+        formattedLines.push(line);
+        continue;
+      }
+      
+      if (inCodeBlock) {
+        formattedLines.push(line);
+        continue;
+      }
+      
+      // Add spacing before headers (except first line)
+      if (trimmed.startsWith('#') && formattedLines.length > 0) {
+        const lastLine = formattedLines[formattedLines.length - 1].trim();
+        if (lastLine && !lastLine.startsWith('#')) {
+          formattedLines.push('');
+        }
+      }
+      
+      // Format headers - ensure proper spacing
+      if (trimmed.startsWith('#')) {
+        formattedLines.push(line);
+        // Add blank line after header if next line is not blank and not a header
+        if (i < lines.length - 1) {
+          const nextLine = lines[i + 1].trim();
+          if (nextLine && !nextLine.startsWith('#') && !nextLine.startsWith('-') && !nextLine.startsWith('*') && !nextLine.startsWith('|')) {
+            // Will add spacing in next iteration if needed
+          }
+        }
+        continue;
+      }
+      
+      // Format lists - ensure consistent indentation
+      if (trimmed.match(/^[-*+]\s/) || trimmed.match(/^\d+\.\s/)) {
+        // Ensure blank line before list if previous line is not blank and not a list item
+        if (formattedLines.length > 0) {
+          const lastLine = formattedLines[formattedLines.length - 1].trim();
+          if (lastLine && !lastLine.match(/^[-*+]\s/) && !lastLine.match(/^\d+\.\s/) && !lastLine.startsWith('#')) {
+            formattedLines.push('');
+          }
+        }
+        formattedLines.push(line);
+        continue;
+      }
+      
+      // Format tables - keep as is but ensure spacing
+      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        // Ensure blank line before table
+        if (formattedLines.length > 0) {
+          const lastLine = formattedLines[formattedLines.length - 1].trim();
+          if (lastLine && !lastLine.startsWith('|')) {
+            formattedLines.push('');
+          }
+        }
+        formattedLines.push(line);
+        // Add blank line after table separator
+        if (trimmed.match(/^\|[\s-|:]+\|$/)) {
+          // This is a table separator, continue
+        } else if (i < lines.length - 1) {
+          const nextLine = lines[i + 1].trim();
+          if (nextLine && !nextLine.startsWith('|')) {
+            // Will add spacing after table
+          }
+        }
+        continue;
+      }
+      
+      // Format horizontal rules
+      if (trimmed.match(/^[-*_]{3,}$/)) {
+        if (formattedLines.length > 0) {
+          const lastLine = formattedLines[formattedLines.length - 1].trim();
+          if (lastLine) {
+            formattedLines.push('');
+          }
+        }
+        formattedLines.push(line);
+        if (i < lines.length - 1) {
+          const nextLine = lines[i + 1].trim();
+          if (nextLine) {
+            formattedLines.push('');
+          }
+        }
+        continue;
+      }
+      
+      // Regular lines
+      if (trimmed === '') {
+        // Don't add multiple consecutive blank lines
+        if (formattedLines.length > 0 && formattedLines[formattedLines.length - 1].trim() !== '') {
+          formattedLines.push('');
+        }
+      } else {
+        formattedLines.push(line);
+      }
+    }
+    
+    // Remove trailing blank lines
+    while (formattedLines.length > 0 && formattedLines[formattedLines.length - 1].trim() === '') {
+      formattedLines.pop();
+    }
+    
+    // Join and update
+    setMarkdown(formattedLines.join('\n'));
+  };
 
   return (
     <div
@@ -229,9 +503,19 @@ const MarkdownEditor = () => {
     >
       {/* Toolbar */}
       <div
-        className="flex items-center gap-3 px-4 py-3 border-b relative"
-        style={{ background: "var(--panel)", borderColor: "var(--border)" }}
+        className="flex items-center gap-3 mt-2 px-4 py-3 relative border-b"
+        style={{ background: "var(--panel)", borderColor: "var(--border-color)" }}
       >
+        {/* File Name Title */}
+        {currentFileId && (
+          <span
+            className="flex gap-2 underline font-medium px-2"
+            style={{ color: "var(--text-color)" }}
+          >
+            File: {savedFiles.find(f => f.id === currentFileId)?.name || fileName}
+          </span>
+        )}
+        
         {/* Save Button with Dropdown */}
         <div className="relative save-dropdown-container">
           <button
@@ -244,11 +528,14 @@ const MarkdownEditor = () => {
               }
               setShowSaveDropdown(!showSaveDropdown);
             }}
-            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-            style={{ background: "var(--primary-color)" }}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white transition-opacity opacity-100 hover:opacity-90"
+            style={{ 
+              background: "var(--sidebar-icon-bg)",
+              boxShadow: isSaveActive ? "0 2px 4px rgba(0,0,0,0.1)" : "none"
+            }}
             type="button"
           >
-            <Save size={16} /> Save {currentFileId && `(${savedFiles.find(f => f.id === currentFileId)?.name || ""})`}
+            <Save size={16} /> Save
           </button>
           
           {showSaveDropdown && (
@@ -281,7 +568,7 @@ const MarkdownEditor = () => {
                   <button
                     onClick={handleSave}
                     className="px-3 py-1.5 rounded-lg text-sm text-white flex-1"
-                    style={{ background: "var(--primary-color)" }}
+                    style={{ background: "var(--sidebar-icon-bg)" }}
                     type="button"
                   >
                     {currentFileId ? "Update" : "Save"}
@@ -311,8 +598,8 @@ const MarkdownEditor = () => {
           <button
             data-files-button
             onClick={() => setShowFilesDropdown(!showFilesDropdown)}
-            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-            style={{ background: "var(--primary-color)" }}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+            style={{ background: "var(--sidebar-icon-bg)" }}
             type="button"
           >
             <FileText size={16} /> Saved Files ({savedFiles.length})
@@ -337,7 +624,7 @@ const MarkdownEditor = () => {
                   onClick={handleNewFile}
                   className="px-2 py-1 rounded text-xs"
                   style={{
-                    background: "var(--primary-color)",
+                    background: "var(--sidebar-icon-bg)",
                     color: "white",
                   }}
                   type="button"
@@ -393,18 +680,86 @@ const MarkdownEditor = () => {
           )}
         </div>
 
-        <button
-          onClick={handleExport}
-          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-          style={{ background: "var(--primary-color)" }}
-          type="button"
-        >
-          <Download size={16} /> Export
-        </button>
+        {/* Export Button with Dropdown */}
+        <div className="relative export-dropdown-container">
+          <button
+            data-export-button
+            onClick={() => setShowExportDropdown(!showExportDropdown)}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+            style={{ background: "var(--sidebar-icon-bg)" }}
+            type="button"
+          >
+            <Download size={16} /> Export
+          </button>
+          
+          {showExportDropdown && (
+            <div
+              className="absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-50"
+              style={{
+                background: "var(--panel-color)",
+                border: "1px solid var(--border-color)",
+              }}
+            >
+              <div className="p-2">
+                <button
+                  onClick={() => handleExport("md")}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+                  style={{
+                    color: "var(--text-color)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "var(--bg-color)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "transparent";
+                  }}
+                  type="button"
+                >
+                  <FileText size={16} /> Markdown (.md)
+                </button>
+                <button
+                  onClick={() => handleExport("doc")}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+                  style={{
+                    color: "var(--text)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "var(--bg-color)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "transparent";
+                  }}
+                  type="button"
+                >
+                  <FileDown size={16} /> HTML Document (.html)
+                </button>
+                <button
+                  onClick={() => handleExport("csv")}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+                  style={{
+                    color: "var(--text)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "var(--bg-color)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "transparent";
+                  }}
+                  type="button"
+                >
+                  <FileSpreadsheet size={16} /> CSV (.csv)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <label
-          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white cursor-pointer"
-          style={{ background: "var(--primary-color)" }}
+          className="px-3 py-1 rounded-2xl text-sm flex items-center gap-2 text-white cursor-pointer hover:opacity-90 transition-opacity"
+          style={{ background: "var(--sidebar-icon-bg)" }}
         >
           <Upload size={16} /> Import
           <input
@@ -416,21 +771,52 @@ const MarkdownEditor = () => {
         </label>
 
         <button
-          onClick={() => setPreviewMode(!previewMode)}
-          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white ml-auto"
-          style={{ background: "var(--primary-color)" }}
+          onClick={formatMarkdown}
+          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+          style={{ background: "var(--sidebar-icon-bg)" }}
           type="button"
+          title="Format/Beautify Markdown"
         >
-          {previewMode ? <Edit size={16} /> : <Eye size={16} />}
-          {previewMode ? "Edit" : "Preview"}
+          <Sparkles size={16} /> Format
         </button>
+
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={handleCopyToClipboard}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white transition-opacity hover:opacity-90"
+            style={{
+              background: copied ? "var(--primary-color)" : "var(--sidebar-icon-bg)",
+            }}
+            type="button"
+          >
+            {copied ? (
+              <>
+                <Check size={16} /> Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={16} /> Copy as Text
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+            style={{ background: "var(--sidebar-icon-bg)" }}
+            type="button"
+          >
+            {previewMode ? <Edit size={16} /> : <Eye size={16} />}
+            {previewMode ? "Edit" : "Preview"}
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         {/* Editor */}
         {!previewMode && (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-[300px] md:min-h-0">
             <Editor
               height="100%"
               theme={monacoTheme}
@@ -454,10 +840,9 @@ const MarkdownEditor = () => {
         {/* Preview */}
         {(previewMode || !previewMode) && (
           <div
-            className={previewMode ? "w-full" : "w-[50%] border-l"}
+            className={previewMode ? "w-full" : "w-full md:w-[50%] min-h-[300px] md:min-h-0"}
             style={{ 
-              background: "var(--panel)", 
-              borderColor: "var(--border)",
+              background: "var(--panel-color)", 
               overflow: "auto"
             }}
           >

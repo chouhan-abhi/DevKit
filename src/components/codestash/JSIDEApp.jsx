@@ -26,7 +26,7 @@ console.log("Hello JavaScript!");`;
     <div
       className="
         h-[calc(100vh-60px)] w-[calc(96vw-60px)]
-        flex flex-row text-[var(--text-color)] overflow-hidden
+        flex flex-col md:flex-row text-[var(--text-color)] overflow-hidden
       "
     >
       <CodeEditor initialCode={code} onCodeChange={setCode} />

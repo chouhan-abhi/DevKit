@@ -13,9 +13,8 @@ export default function AppCard({ app }) {
         border shadow-sm overflow-hidden
         transition-all
         hover:-translate-y-1 hover:shadow-md
-
-        bg-[var(--panel-color)]
-        border-[var(--border-color)]
+        bg-(--panel-color)
+        border-(--border-color)
       "
       style={{ color: "var(--text-color)" }}
     >

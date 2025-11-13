@@ -99,29 +99,33 @@ const JsonEditor = () => {
       className="h-full w-full flex flex-col"
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
-      <div className="flex flex-1 rounded-lg overflow-hidden shadow-sm">
+      <div className="flex flex-col md:flex-row flex-1 rounded-lg overflow-hidden shadow-sm">
         {/* Left: JSON Editor */}
         <div
-          className="flex-1 flex flex-col border-r"
-          style={{ borderColor: "var(--border)" }}
+          className="flex-1 flex flex-col border-r-0 md:border-r border-b md:border-b-0"
+          style={{ borderColor: "var(--border-color)" }}
         >
           {/* Toolbar */}
           <div
-            className="flex items-center gap-3 px-4 py-3 border-b"
-            style={{ background: "var(--panel)", borderColor: "var(--border)" }}
+            className="flex items-center gap-3 px-4 py-3 mt-2 border-b"
+            style={{ background: "var(--panel-color)", borderColor: "var(--border-color)" }}
           >
             <button
               onClick={formatJson}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-              style={{ background: "var(--primary-color)" }}
+              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+              style={{ background: "var(--sidebar-icon-bg)" }}
+              type="button"
+              title="Format/Beautify JSON"
             >
               <Code size={16} /> Format
             </button>
 
             <button
               onClick={minifyJson}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-              style={{ background: "var(--primary-color)" }}
+              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+              style={{ background: "var(--sidebar-icon-bg)" }}
+              type="button"
+              title="Minify JSON"
             >
               <Minimize2 size={16} /> Minify
             </button>
@@ -163,8 +167,8 @@ const JsonEditor = () => {
 
         {/* Right: JSON Preview */}
         <div
-          className="w-[40%] overflow-auto p-6"
-          style={{ background: "var(--panel)", borderColor: "var(--border)" }}
+          className="w-full md:w-[40%] overflow-auto p-6"
+          style={{ background: "var(--panel-color)", borderColor: "var(--border-color)" }}
         >
           <h2
             className="text-lg font-semibold mb-4 tracking-wide"

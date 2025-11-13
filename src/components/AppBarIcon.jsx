@@ -1,6 +1,6 @@
 import * as Lucide from "lucide-react";
 
-export default function AppBarIcon({ label, description, icon }) {
+export default function AppBarIcon({ label, description, icon, isActive = false }) {
 	const Icon = icon ? Lucide[icon] : null;
 
 	return (
@@ -13,7 +13,7 @@ export default function AppBarIcon({ label, description, icon }) {
           hover:scale-105
         "
 				style={{
-					background: "var(--sidebar-icon-bg)",
+					background: isActive ? "var(--primary-color)" : "var(--sidebar-icon-bg)",
 					color: "var(--sidebar-icon-text)",
 				}}
 			>
@@ -28,9 +28,11 @@ export default function AppBarIcon({ label, description, icon }) {
 				className="
           opacity-0 pointer-events-none group-hover:opacity-100 
           group-hover:pointer-events-auto
-          absolute right-12 top-1/2 -translate-y-1/2
+          absolute 
+          bottom-full left-1/2 -translate-x-1/2 mb-2
+          md:bottom-auto md:left-auto md:right-12 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 md:mb-0
           p-4 rounded-xl shadow-xl min-w-[160px] transition duration-200
-          z-[60]
+          z-60
         "
 				style={{
 					background: "var(--bg-color)",

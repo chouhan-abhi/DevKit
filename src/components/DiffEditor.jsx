@@ -130,30 +130,34 @@ export default function DualEditableDiff() {
   }, [leftCode, rightCode]);
 
   return (
-    <div className="grid grid-cols-2 h-screen gap-2 p-2 bg-[var(--bg-color)]">
+    <div className="flex flex-col md:grid md:grid-cols-2 h-screen gap-2 p-2 bg-[var(--bg-color)]">
       {/* ✅ LEFT EDITOR */}
-      <Editor
-        height="100%"
-        language="javascript"
-        theme={monacoTheme}
-        value={leftCode}
-        onMount={(editor) => {
-          leftRef.current = editor;
-        }}
-        onChange={onLeftChange}
-      />
+      <div className="flex-1 md:h-full min-h-[300px]">
+        <Editor
+          height="100%"
+          language="javascript"
+          theme={monacoTheme}
+          value={leftCode}
+          onMount={(editor) => {
+            leftRef.current = editor;
+          }}
+          onChange={onLeftChange}
+        />
+      </div>
 
       {/* ✅ RIGHT EDITOR */}
-      <Editor
-        height="100%"
-        language="javascript"
-        theme={monacoTheme}
-        value={rightCode}
-        onMount={(editor) => {
-          rightRef.current = editor;
-        }}
-        onChange={onRightChange}
-      />
+      <div className="flex-1 md:h-full min-h-[300px]">
+        <Editor
+          height="100%"
+          language="javascript"
+          theme={monacoTheme}
+          value={rightCode}
+          onMount={(editor) => {
+            rightRef.current = editor;
+          }}
+          onChange={onRightChange}
+        />
+      </div>
 
       {/* ✅ Diff Highlight Styles */}
       <style>

@@ -23,7 +23,7 @@ export default function Home() {
       </div>
 
       {/* ✅ Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl animate-fadeIn">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl animate-fadeIn">
         {appList
           .filter((app) => app.key !== "")
           .map((app) => (

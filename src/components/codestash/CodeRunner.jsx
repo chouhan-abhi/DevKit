@@ -112,7 +112,7 @@ export default function CodeRunner({ code = "" }) {
       className="
         flex flex-col h-full w-full
         bg-[var(--panel-color)]
-        border-l border-[var(--border-color)]
+        border-l-0 md:border-l border-t md:border-t-0 border-[var(--border-color)]
         overflow-hidden rounded-lg shadow-sm
         transition-all
       "
@@ -121,7 +121,7 @@ export default function CodeRunner({ code = "" }) {
       <div
         className="
           flex items-center justify-between
-          px-4 py-2 bg-[var(--bg-color)]/80 backdrop-blur-sm
+          mt-2 px-4 py-2 bg-[var(--bg-color)]/80 backdrop-blur-sm
         "
       >
         <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-color)]">

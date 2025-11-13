@@ -8,7 +8,12 @@ import {
   Upload,
   Eye,
   Edit,
-  GitBranch
+  FileDown,
+  FileSpreadsheet,
+  Copy,
+  Check,
+  Sparkles,
+  Image
 } from "lucide-react";
 import { storage } from "../utils/StorageManager";
 import { themeManager } from "../utils/themeManger";
@@ -29,14 +34,29 @@ const MermaidEditor = () => {
     return storage.get("mermaid:files", []);
   });
   
+  // Restore current file ID and name from storage
+  const [currentFileId, setCurrentFileId] = useState(() => {
+    return storage.get("mermaid:currentFileId", null);
+  });
+  
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
-  const [fileName, setFileName] = useState("");
+  const [fileName, setFileName] = useState(() => {
+    const savedFileId = storage.get("mermaid:currentFileId", null);
+    if (savedFileId) {
+      const savedFiles = storage.get("mermaid:files", []);
+      const file = savedFiles.find(f => f.id === savedFileId);
+      return file?.name || "";
+    }
+    return "";
+  });
   const [showFilesDropdown, setShowFilesDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [currentFileId, setCurrentFileId] = useState(null);
   const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
   const mermaidRef = useRef(null);
   const mermaidContainerRef = useRef(null);
+  const hasRestoredFile = useRef(false);
 
   // Get initial theme and convert to Monaco theme format
   const getMonacoTheme = (theme) => {
@@ -72,13 +92,28 @@ const MermaidEditor = () => {
         );
         setSavedFiles(updatedFiles);
         storage.set("mermaid:files", updatedFiles);
+        // Save current file ID for persistence
+        storage.set("mermaid:currentFileId", currentFileId);
       } else {
         storage.set("mermaid:current", mermaidCode);
+        storage.remove("mermaid:currentFileId");
       }
     }, 1000);
 
     return () => clearTimeout(timer);
   }, [mermaidCode, currentFileId, savedFiles]);
+  
+  // Restore file content when currentFileId is loaded from storage (only once on mount)
+  useEffect(() => {
+    if (!hasRestoredFile.current && currentFileId && savedFiles.length > 0) {
+      const file = savedFiles.find(f => f.id === currentFileId);
+      if (file) {
+        setMermaidCode(file.content);
+        setFileName(file.name);
+        hasRestoredFile.current = true;
+      }
+    }
+  }, [currentFileId, savedFiles]);
 
   // Render Mermaid diagram
   useEffect(() => {
@@ -163,11 +198,73 @@ const MermaidEditor = () => {
       if (!event.target.closest('.files-dropdown-container') && !event.target.closest('button[data-files-button]')) {
         setShowFilesDropdown(false);
       }
+      if (!event.target.closest('.export-dropdown-container') && !event.target.closest('button[data-export-button]')) {
+        setShowExportDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  // Check if save button should be active
+  const isSaveActive = currentFileId || fileName.trim().length > 0;
+  
+  const handleCopyToClipboard = async () => {
+    try {
+      // Copy the mermaid code text content
+      await navigator.clipboard.writeText(mermaidCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = mermaidCode;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (fallbackErr) {
+        console.error('Failed to copy:', fallbackErr);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+  
+  const formatMermaid = () => {
+    // Basic formatting for Mermaid code - add proper indentation
+    const lines = mermaidCode.split('\n');
+    const formattedLines = [];
+    let indentLevel = 0;
+    const indentSize = 2;
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        formattedLines.push('');
+        continue;
+      }
+      
+      // Decrease indent for closing braces or certain keywords
+      if (trimmed.startsWith('}') || trimmed.match(/^(end|else|endif)/i)) {
+        indentLevel = Math.max(0, indentLevel - 1);
+      }
+      
+      // Add indented line
+      formattedLines.push(' '.repeat(indentLevel * indentSize) + trimmed);
+      
+      // Increase indent for opening braces or certain keywords
+      if (trimmed.includes('{') || trimmed.match(/^(if|else|for|while)/i)) {
+        indentLevel++;
+      }
+    }
+    
+    setMermaidCode(formattedLines.join('\n'));
+  };
 
   const handleSave = () => {
     if (!fileName.trim()) {
@@ -211,6 +308,7 @@ const MermaidEditor = () => {
 
     setSavedFiles(updatedFiles);
     storage.set("mermaid:files", updatedFiles);
+    storage.set("mermaid:currentFileId", fileData.id);
     setShowSaveDropdown(false);
     setFileName("");
   };
@@ -225,6 +323,7 @@ const MermaidEditor = () => {
     setMermaidCode(file.content);
     setCurrentFileId(file.id);
     setFileName(file.name);
+    storage.set("mermaid:currentFileId", file.id);
     setShowFilesDropdown(false);
   };
 
@@ -232,6 +331,7 @@ const MermaidEditor = () => {
     setMermaidCode(initialMermaid);
     setCurrentFileId(null);
     setFileName("");
+    storage.remove("mermaid:currentFileId");
     setShowSaveDropdown(false);
     setShowFilesDropdown(false);
   };
@@ -246,23 +346,142 @@ const MermaidEditor = () => {
         setCurrentFileId(null);
         setFileName("");
         setMermaidCode(initialMermaid);
+        storage.remove("mermaid:currentFileId");
       }
     }
   };
 
-  const handleExport = () => {
-    const blob = new Blob([mermaidCode], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
+  const handleExport = async (format = "mmd") => {
     const currentFileName = currentFileId 
       ? savedFiles.find(f => f.id === currentFileId)?.name || fileName || "mermaid"
       : fileName || "mermaid";
-    a.download = `${currentFileName}.mmd`;
+    
+    if (format === "png") {
+      // Export as PNG
+      try {
+        const mermaid = (await import("mermaid")).default;
+        const id = `mermaid-export-${Date.now()}`;
+        const { svg } = await mermaid.render(id, mermaidCode);
+        
+        // Convert SVG to PNG using a more reliable method
+        const svgData = new XMLSerializer().serializeToString(
+          new DOMParser().parseFromString(svg, "image/svg+xml").documentElement
+        );
+        
+        // Create a canvas and draw the SVG
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        
+        // Set canvas size - use a reasonable default or calculate from SVG viewBox
+        const svgDoc = new DOMParser().parseFromString(svg, "image/svg+xml");
+        const svgElement = svgDoc.documentElement;
+        const viewBox = svgElement.getAttribute("viewBox");
+        let width = 1200; // Default width
+        let height = 800; // Default height
+        
+        if (viewBox) {
+          const [, , vw, vh] = viewBox.split(/\s+/).map(Number);
+          if (vw && vh) {
+            // Maintain aspect ratio, scale to fit reasonable size
+            const scale = Math.min(1200 / vw, 800 / vh);
+            width = vw * scale;
+            height = vh * scale;
+          }
+        } else {
+          const w = svgElement.getAttribute("width");
+          const h = svgElement.getAttribute("height");
+          if (w && h) {
+            width = Number.parseFloat(w) || width;
+            height = Number.parseFloat(h) || height;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Create SVG data URL with proper encoding
+        const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = () => {
+          try {
+            // Fill white background for better PNG export
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw the SVG image
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to PNG blob and download
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const pngUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = pngUrl;
+                a.download = `${currentFileName}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(pngUrl);
+              } else {
+                throw new Error("Failed to create PNG blob");
+              }
+              URL.revokeObjectURL(url);
+            }, "image/png");
+          } catch (drawErr) {
+            console.error("Failed to draw image on canvas:", drawErr);
+            URL.revokeObjectURL(url);
+            alert("Failed to export as PNG. Please try again.");
+          }
+        };
+        
+        img.onerror = () => {
+          console.error("Failed to load SVG image");
+          URL.revokeObjectURL(url);
+          alert("Failed to export as PNG. Please try again.");
+        };
+        
+        img.src = url;
+      } catch (err) {
+        console.error("Failed to export PNG:", err);
+        alert("Failed to export as PNG. Please try again.");
+      }
+      setShowExportDropdown(false);
+      return;
+    }
+    
+    let content = mermaidCode;
+    let mimeType = "text/plain";
+    let extension = "mmd";
+    
+    if (format === "svg") {
+      // Export as SVG
+      try {
+        const mermaid = (await import("mermaid")).default;
+        const id = `mermaid-export-${Date.now()}`;
+        const { svg } = await mermaid.render(id, mermaidCode);
+        content = svg;
+        mimeType = "image/svg+xml";
+        extension = "svg";
+      } catch (err) {
+        console.error("Failed to export SVG:", err);
+        alert("Failed to export as SVG. Please try again.");
+        setShowExportDropdown(false);
+        return;
+      }
+    }
+    
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${currentFileName}.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setShowExportDropdown(false);
   };
 
   const handleImport = (e) => {
@@ -273,6 +492,7 @@ const MermaidEditor = () => {
         setMermaidCode(event.target.result);
         setCurrentFileId(null);
         setFileName("");
+        storage.remove("mermaid:currentFileId");
       };
       reader.readAsText(file);
     }
@@ -285,9 +505,19 @@ const MermaidEditor = () => {
     >
       {/* Toolbar */}
       <div
-        className="flex items-center gap-3 px-4 py-3 border-b relative"
-        style={{ background: "var(--panel-color)", borderColor: "var(--border)" }}
+        className="flex items-center gap-3 mt-2 px-4 py-3 border-b relative"
+        style={{ background: "var(--panel-color)", borderColor: "var(--border-color)" }}
       >
+        {/* File Name Title */}
+        {currentFileId && (
+          <span
+            className="font-medium px-2 underline"
+            style={{ color: "var(--text-color)" }}
+          >
+            File: {savedFiles.find(f => f.id === currentFileId)?.name || fileName}
+          </span>
+        )}
+        
         {/* Save Button with Dropdown */}
         <div className="relative save-dropdown-container">
           <button
@@ -299,11 +529,14 @@ const MermaidEditor = () => {
               }
               setShowSaveDropdown(!showSaveDropdown);
             }}
-            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-            style={{ background: "var(--primary-color)" }}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white transition-opacity opacity-100 hover:opacity-90"
+            style={{ 
+              background: "var(--sidebar-icon-bg)",
+              boxShadow: isSaveActive ? "0 2px 4px rgba(0,0,0,0.1)" : "none"
+            }}
             type="button"
           >
-            <Save size={16} /> Save {currentFileId && `(${savedFiles.find(f => f.id === currentFileId)?.name || ""})`}
+            <Save size={16} /> Save
           </button>
           
           {showSaveDropdown && (
@@ -335,8 +568,8 @@ const MermaidEditor = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={handleSave}
-                    className="px-3 py-1.5 rounded-lg text-sm text-white flex-1"
-                    style={{ background: "var(--primary-color)" }}
+                    className="px-3 py-1.5 rounded-lg text-sm text-white flex-1 hover:opacity-90 transition-opacity"
+                    style={{ background: "var(--sidebar-icon-bg)" }}
                     type="button"
                   >
                     {currentFileId ? "Update" : "Save"}
@@ -366,8 +599,8 @@ const MermaidEditor = () => {
           <button
             data-files-button
             onClick={() => setShowFilesDropdown(!showFilesDropdown)}
-            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-            style={{ background: "var(--primary-color)" }}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+            style={{ background: "var(--sidebar-icon-bg)" }}
             type="button"
           >
             <FileText size={16} /> Saved Files ({savedFiles.length})
@@ -390,9 +623,9 @@ const MermaidEditor = () => {
                 </h3>
                 <button
                   onClick={handleNewFile}
-                  className="px-2 py-1 rounded text-xs"
+                  className="px-2 py-1 rounded text-xs hover:opacity-90 transition-opacity"
                   style={{
-                    background: "var(--primary-color)",
+                    background: "var(--sidebar-icon-bg)",
                     color: "white",
                   }}
                   type="button"
@@ -448,18 +681,86 @@ const MermaidEditor = () => {
           )}
         </div>
 
-        <button
-          onClick={handleExport}
-          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
-          style={{ background: "var(--primary-color)" }}
-          type="button"
-        >
-          <Download size={16} /> Export
-        </button>
+        {/* Export Button with Dropdown */}
+        <div className="relative export-dropdown-container">
+          <button
+            data-export-button
+            onClick={() => setShowExportDropdown(!showExportDropdown)}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+            style={{ background: "var(--sidebar-icon-bg)" }}
+            type="button"
+          >
+            <Download size={16} /> Export
+          </button>
+          
+          {showExportDropdown && (
+            <div
+              className="absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-50"
+              style={{
+                background: "var(--panel-color)",
+                border: "1px solid var(--border-color)",
+              }}
+            >
+              <div className="p-2">
+                <button
+                  onClick={() => handleExport("mmd")}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+                  style={{
+                    color: "var(--text-color)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "var(--bg-color)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "transparent";
+                  }}
+                  type="button"
+                >
+                  <FileText size={16} /> Mermaid (.mmd)
+                </button>
+                <button
+                  onClick={() => handleExport("svg")}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+                  style={{
+                    color: "var(--text)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "var(--bg-color)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "transparent";
+                  }}
+                  type="button"
+                >
+                  <FileDown size={16} /> SVG (.svg)
+                </button>
+                <button
+                  onClick={() => handleExport("png")}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+                  style={{
+                    color: "var(--text)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "var(--bg-color)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "transparent";
+                  }}
+                  type="button"
+                >
+                  <Image size={16} /> PNG (.png)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <label
-          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white cursor-pointer"
-          style={{ background: "var(--primary-color)" }}
+          className="px-3 py-1 rounded-2xl text-sm flex items-center gap-2 text-white cursor-pointer hover:opacity-90 transition-opacity"
+          style={{ background: "var(--sidebar-icon-bg)" }}
         >
           <Upload size={16} /> Import
           <input
@@ -471,21 +772,52 @@ const MermaidEditor = () => {
         </label>
 
         <button
-          onClick={() => setPreviewMode(!previewMode)}
-          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white ml-auto"
-          style={{ background: "var(--primary-color)" }}
+          onClick={formatMermaid}
+          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+          style={{ background: "var(--sidebar-icon-bg)" }}
           type="button"
+          title="Format/Beautify Mermaid"
         >
-          {previewMode ? <Edit size={16} /> : <Eye size={16} />}
-          {previewMode ? "Edit" : "Preview"}
+          <Sparkles size={16} /> Format
         </button>
+
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={handleCopyToClipboard}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white transition-opacity hover:opacity-90"
+            style={{
+              background: copied ? "var(--primary-color)" : "var(--sidebar-icon-bg)",
+            }}
+            type="button"
+          >
+            {copied ? (
+              <>
+                <Check size={16} /> Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={16} /> Copy as Text
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+            style={{ background: "var(--sidebar-icon-bg)" }}
+            type="button"
+          >
+            {previewMode ? <Edit size={16} /> : <Eye size={16} />}
+            {previewMode ? "Edit" : "Preview"}
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         {/* Editor */}
         {!previewMode && (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-[300px] md:min-h-0">
             <Editor
               height="100%"
               theme={monacoTheme}
@@ -509,7 +841,7 @@ const MermaidEditor = () => {
         {/* Preview */}
         {(previewMode || !previewMode) && (
           <div
-            className={previewMode ? "w-full" : "w-[50%] border-l"}
+            className={previewMode ? "w-full" : "w-full md:w-[50%] min-h-[300px] md:min-h-0"}
             style={{ 
               background: "var(--panel-color)", 
               borderColor: "var(--border)",

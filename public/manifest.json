@@ -1,0 +1,88 @@
+{
+  "name": "DevKit - Developer Tools",
+  "short_name": "DevKit",
+  "description": "A collection of powerful developer tools — all in one place. Includes JSON Editor, Markdown Editor, Mermaid Diagram Editor, Code Diff Viewer, JavaScript IDE, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6b6b",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/DevKit.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/DevKit.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/DevKit.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["developer", "productivity", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "JSON Editor",
+      "short_name": "JSON",
+      "description": "View, format, and edit JSON data",
+      "url": "/JSON",
+      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Markdown Editor",
+      "short_name": "Markdown",
+      "description": "Write and preview markdown files",
+      "url": "/markdown",
+      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mermaid Draw",
+      "short_name": "Mermaid",
+      "description": "Create and edit Mermaid diagrams",
+      "url": "/mermaid-draw",
+      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "JavaScript IDE",
+      "short_name": "JS IDE",
+      "description": "Write and run JavaScript code",
+      "url": "/js-ide",
+      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Code Diff Viewer",
+      "short_name": "Diff",
+      "description": "Compare code versions side by side",
+      "url": "/diff-editor",
+      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Todo Tasks",
+      "short_name": "Tasks",
+      "description": "Manage your development tasks",
+      "url": "/tasks",
+      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
+
