@@ -17,6 +17,8 @@ const TodoList = lazy(() => import("./components/TodoList"));
 const CodeDiffViewer = lazy(() => import("./components/DiffEditor"));
 const JsonEditor = lazy(() => import("./components/JsonEditor"));
 const JSIDEApp = lazy(() => import("./components/codestash/JSIDEApp"));
+const MarkdownEditor = lazy(() => import("./components/MarkdownEditor"));
+const MermaidEditor = lazy(() => import("./components/MermaidEditor"));
 
 function App() {
 	// Initialize theme on mount
@@ -81,6 +83,8 @@ function App() {
 							<Route path="/js-ide" element={<JSIDEApp />} />
 							<Route path="/diff-editor" element={<CodeDiffViewer />} />
 							<Route path="/JSON" element={<JsonEditor />} />
+							<Route path="/markdown" element={<MarkdownEditor />} />
+							<Route path="/mermaid-draw" element={<MermaidEditor />} />
 							<Route path="/settings" element={<Settings />} />
 							<Route path="*" element={<Navigate to="/" replace />} />
 						</Routes>

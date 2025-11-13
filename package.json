@@ -19,10 +19,12 @@
     "date-fns-tz": "^3.2.0",
     "diff-match-patch": "^1.0.5",
     "lucide-react": "^0.542.0",
+    "mermaid": "^11.12.1",
     "monaco-editor": "^0.54.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-json-view-lite": "^2.5.0",
+    "react-markdown": "^10.1.0",
     "react-responsive-carousel": "^3.2.23",
     "react-router-dom": "^7.9.5",
     "tailwindcss": "^4.1.12"

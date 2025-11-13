@@ -30,10 +30,22 @@ export const appList = [
     icon: "Braces", // structured data / JSON braces
   },
   {
+    key: "markdown",
+    label: "Markdown Editor",
+    description: "Write, preview, and manage your markdown files",
+    icon: "FileText"
+  },
+  {
+    key: "mermaid-draw",
+    label: "Mermaid Draw",
+    description: "Draw, design and preview your Mermaid diagrams",
+    icon: "GitBranch"
+  },
+  {
     key: "settings",
     label: "Settings",
     description: "Customize your themes, preferences, and development environment.",
-    icon: "Settings", // gear/settings symbol
+    icon: "Settings"
   },
 ];
 
