@@ -42,6 +42,12 @@ export const appList = [
     icon: "GitBranch"
   },
   {
+    key: "github-trending",
+    label: "GitHub Trending",
+    description: "Explore trending repositories on GitHub. Discover popular projects, filter by language and date, and start your open source journey.",
+    icon: "TrendingUp"
+  },
+  {
     key: "settings",
     label: "Settings",
     description: "Customize your themes, preferences, and development environment.",

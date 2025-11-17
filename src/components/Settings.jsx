@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { themeManager } from "../utils/themeManger";
+import { Github, ExternalLink } from "lucide-react";
 
 export default function Settings() {
   const [theme, setTheme] = useState(themeManager.getTheme());
@@ -37,15 +38,27 @@ export default function Settings() {
             return (
               <button
                 key={t.key}
+                type="button"
                 onClick={() => changeTheme(t.key)}
                 className={`
     px-5 py-2.5 text-sm font-medium rounded-full transition-all
-    ${isActive ? "bg-[var(--primary-color)] text-white border-[var(--primary-color)]" :
-                    "bg-[var(--bg-color)] text-[var(--text-color)] border-[var(--border-color)]"}
-
-    hover:text-[var(--primary-color)]
-    hover:bg-[var(--primary-color-light)]
+    ${isActive ? "text-white" : ""}
   `}
+                style={{
+                  background: isActive ? "var(--primary-color)" : "var(--bg-color)",
+                  color: isActive ? "white" : "var(--text-color)",
+                  border: `1px solid ${isActive ? "var(--primary-color)" : "var(--border-color)"}`,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = "var(--primary-color)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = "var(--text-color)";
+                  }
+                }}
               >
                 {t.label}
               </button>
@@ -54,8 +67,38 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Repository Section */}
+      <div className="mt-8 pt-6 border-t" style={{ borderColor: "var(--border-color)" }}>
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--text-color)" }}
+        >
+          Repository
+        </h3>
+        <p
+          className="text-sm mb-4 opacity-70"
+          style={{ color: "var(--text-color)" }}
+        >
+          Check out the source code, contribute, or report issues on GitHub.
+        </p>
+        <a
+          href="https://github.com/chouhan-abhi/DevKit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90"
+          style={{
+            background: "var(--sidebar-icon-bg)",
+            color: "white",
+          }}
+        >
+          <Github size={18} />
+          View on GitHub
+          <ExternalLink size={14} />
+        </a>
+      </div>
+
       {/* Future Section Placeholder */}
-      <div className="opacity-60 text-sm italic">
+      <div className="mt-6 opacity-60 text-sm italic">
         More settings coming soon…
       </div>
     </div>

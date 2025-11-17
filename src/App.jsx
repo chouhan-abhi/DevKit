@@ -19,6 +19,7 @@ const JsonEditor = lazy(() => import("./components/JsonEditor"));
 const JSIDEApp = lazy(() => import("./components/codestash/JSIDEApp"));
 const MarkdownEditor = lazy(() => import("./components/MarkdownEditor"));
 const MermaidEditor = lazy(() => import("./components/MermaidEditor"));
+const GitHubTrending = lazy(() => import("./components/GitHubTrending"));
 
 function App() {
 	const location = useLocation();
@@ -96,6 +97,7 @@ function App() {
 							<Route path="/JSON" element={<JsonEditor />} />
 							<Route path="/markdown" element={<MarkdownEditor />} />
 							<Route path="/mermaid-draw" element={<MermaidEditor />} />
+							<Route path="/github-trending" element={<GitHubTrending />} />
 							<Route path="/settings" element={<Settings />} />
 							<Route path="*" element={<Navigate to="/" replace />} />
 						</Routes>

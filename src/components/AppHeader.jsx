@@ -38,16 +38,22 @@ function AppHeader() {
 			{/* ICON + TITLE */}
 			<div className="flex items-center gap-2">
 				{Icon && (
-					<Icon
-						size={22}
-						className="opacity-90"
-						style={{ color: "var(--primary-color)" }}
-					/>
+					<div
+						className="w-10 h-10 flex items-center justify-center rounded-xl opacity-90"
+						style={{
+							border: "1px solid var(--border-color)",
+						}}
+					>
+						<Icon
+							size={20}
+							style={{ color: "var(--primary-color)" }}
+						/>
+					</div>
 				)}
 
 				<h1
 					className="text-xl font-semibold tracking-wide"
-					style={{ color: "var(--primary-color)" }}
+					style={{ color: "var(--text-color)" }}
 				>
 					{currentApp.label}
 				</h1>

@@ -1,8 +1,36 @@
 {
   "name": "devkit",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A modern, all-in-one developer toolkit built with React and Vite. DevKit provides essential development tools in a single, unified interface with a beautiful, themeable UI.",
   "type": "module",
+  "private": true,
+  "author": "chouhan-abhi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chouhan-abhi/DevKit.git"
+  },
+  "homepage": "https://github.com/chouhan-abhi/DevKit#readme",
+  "bugs": {
+    "url": "https://github.com/chouhan-abhi/DevKit/issues"
+  },
+  "keywords": [
+    "developer-tools",
+    "devkit",
+    "json-editor",
+    "markdown-editor",
+    "mermaid",
+    "code-editor",
+    "diff-viewer",
+    "javascript-ide",
+    "github-trending",
+    "task-manager",
+    "react",
+    "vite",
+    "monaco-editor",
+    "pwa",
+    "progressive-web-app"
+  ],
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
