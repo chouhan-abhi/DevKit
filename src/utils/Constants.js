@@ -41,6 +41,11 @@ export const appList = [
     description: "Draw, design and preview your Mermaid diagrams",
     icon: "GitBranch"
   },
+  { key: "svg-editor", 
+    label: "SVG Editor", 
+    description: "Draw, design and preview your SVG files", 
+    icon: "Image" 
+  },
   {
     key: "github-trending",
     label: "GitHub Trending",
