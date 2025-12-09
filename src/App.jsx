@@ -16,11 +16,15 @@ const Settings = lazy(() => import("./components/Settings"));
 const TodoList = lazy(() => import("./components/TodoList"));
 const CodeDiffViewer = lazy(() => import("./components/DiffEditor"));
 const JsonEditor = lazy(() => import("./components/JsonEditor"));
+<<<<<<< Updated upstream
 const JSIDEApp = lazy(() => import("./components/codestash/JSIDEApp"));
 const MarkdownEditor = lazy(() => import("./components/MarkdownEditor"));
 const MermaidEditor = lazy(() => import("./components/MermaidEditor"));
 const GitHubTrending = lazy(() => import("./components/GitHubTrending"));
 const SvgEditor = lazy(() => import("./components/svgEditor/SvgEditor"));
+=======
+const MarkdownEditor = lazy(() => import("./components/MarkdownEditor"));
+>>>>>>> Stashed changes
 
 function App() {
 	const location = useLocation();
@@ -97,9 +101,12 @@ function App() {
 							<Route path="/diff-editor" element={<CodeDiffViewer />} />
 							<Route path="/JSON" element={<JsonEditor />} />
 							<Route path="/markdown" element={<MarkdownEditor />} />
+<<<<<<< Updated upstream
 							<Route path="/mermaid-draw" element={<MermaidEditor />} />
 							<Route path="/github-trending" element={<GitHubTrending />} />
 							<Route path="/svg-editor" element={<SvgEditor />} />
+=======
+>>>>>>> Stashed changes
 							<Route path="/settings" element={<Settings />} />
 							<Route path="*" element={<Navigate to="/" replace />} />
 						</Routes>
