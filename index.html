@@ -1,26 +1,118 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- =========================================================
+      BASIC
+    ========================================================== -->
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/DevKit.svg" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+
+    <title>DevKit — All-in-One Developer Toolkit</title>
+
+    <!-- =========================================================
+      SEO
+    ========================================================== -->
+    <meta
+      name="description"
+      content="DevKit is a modern collection of powerful developer tools — JSON Editor, Markdown Editor, Mermaid Diagrams, Code Diff Viewer, JavaScript IDE, SVG Editor, and more."
+    />
+    <meta
+      name="keywords"
+      content="developer tools, json editor, markdown editor, mermaid diagrams, javascript ide, svg editor, code diff, devkit"
+    />
+    <meta name="author" content="DevKit" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- =========================================================
+      THEME / UI
+    ========================================================== -->
     <meta name="theme-color" content="#ff6b6b" />
-    <meta name="description" content="A collection of powerful developer tools — all in one place. Includes JSON Editor, Markdown Editor, Mermaid Diagram Editor, Code Diff Viewer, JavaScript IDE, and more." />
-    
-    <!-- iOS PWA Support -->
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- =========================================================
+      ICONS
+    ========================================================== -->
+    <link rel="icon" type="image/svg+xml" href="/DevKit.svg" />
+    <link rel="apple-touch-icon" href="/DevKit.png" />
+    <link rel="mask-icon" href="/DevKit.png" color="#ff6b6b" />
+
+    <!-- =========================================================
+      PWA
+    ========================================================== -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="DevKit" />
-    <link rel="apple-touch-icon" href="/DevKit.svg" />
-    
-    <!-- Android/Chrome PWA Support -->
+
+    <!-- Android / Chrome -->
     <meta name="mobile-web-app-capable" content="yes" />
-    
-    <title>DevKit - Developer Tools</title>
+
+    <!-- =========================================================
+      SOCIAL SHARING (Open Graph)
+    ========================================================== -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DevKit — Developer Tools in One Place" />
+    <meta
+      property="og:description"
+      content="A modern toolkit for developers: JSON, Markdown, Mermaid, JS IDE, SVG editor, GitHub trending, and more."
+    />
+    <meta property="og:image" content="/DevKit.png" />
+    <meta property="og:url" content="/" />
+    <meta property="og:site_name" content="DevKit" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DevKit — Developer Tools" />
+    <meta
+      name="twitter:description"
+      content="All your essential developer tools in one fast, modern web app."
+    />
+    <meta name="twitter:image" content="/DevKit.png" />
+
+    <!-- =========================================================
+      PERFORMANCE HINTS
+    ========================================================== -->
+    <!-- Example: If you load fonts externally later -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" /> -->
+    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /> -->
+
+    <!-- =========================================================
+      SECURITY (Safe Defaults)
+      You can tighten CSP later once everything is stable
+    ========================================================== -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self' data:;
+        connect-src 'self';
+        frame-src 'self';
+      "
+    />
   </head>
+
   <body>
+    <noscript>
+      <strong>
+        DevKit requires JavaScript to run. Please enable JavaScript in your
+        browser.
+      </strong>
+    </noscript>
+
     <div id="root"></div>
+
+    <!-- =========================================================
+      APP ENTRY
+    ========================================================== -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

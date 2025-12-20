@@ -18,13 +18,13 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/DevKit.svg",
+      "src": "/DevKit.png",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/DevKit.svg",
+      "src": "/DevKit.png",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
