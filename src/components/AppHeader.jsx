@@ -19,7 +19,7 @@ function AppHeader() {
 
 	return (
 		<header
-			className="fixed top-0 left-0 w-full p-3 shadow-sm
+			className="fixed top-0 left-0 w-full px-3 py-1 shadow-sm
                  flex items-center gap-4 z-50 transition-all"
 			style={{
 				background: "var(--header-bg)",
@@ -31,21 +31,21 @@ function AppHeader() {
 				onClick={() => navigate(-1)}
 				className="flex items-center gap-2 opacity-80 hover:opacity-100 transition"
 			>
-				<ArrowLeft size={20} />
+				<ArrowLeft size={18} />
 				<span className="font-medium">Back</span>
 			</button>
 
 			{/* ICON + TITLE */}
-			<div className="flex items-center gap-2">
+			<div className="flex items-center gap-3">
 				{Icon && (
 					<div
-						className="w-10 h-10 flex items-center justify-center rounded-xl opacity-90"
+						className="w-9 h-9 flex items-center justify-center rounded-xl opacity-90"
 						style={{
 							border: "1px solid var(--border-color)",
 						}}
 					>
 						<Icon
-							size={20}
+							size={18}
 							style={{ color: "var(--primary-color)" }}
 						/>
 					</div>

@@ -1,15 +1,20 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Play, Trash, Terminal, Loader2 } from "lucide-react";
 
 export default function CodeRunner({ code = "" }) {
   const iframeRef = useRef(null);
   const logContainerRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+
   const [logs, setLogs] = useState([]);
   const [execTime, setExecTime] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const runCode = () => {
+  const runCode = useCallback(() => {
+    if (!code.trim()) return;
+
     setIsRunning(true);
+
     const escapedCode = code.replace(/<\/script>/g, "<\\/script>");
     const sandboxHtml = `
 <!DOCTYPE html>
@@ -24,8 +29,9 @@ export default function CodeRunner({ code = "" }) {
         const originalInfo = console.info;
 
         function stringify(arg) {
-          if (arg instanceof Error) return arg.name + ": " + arg.message + "\\n" + arg.stack;
-          if (typeof arg === 'object') {
+          if (arg instanceof Error)
+            return arg.name + ": " + arg.message + "\\n" + arg.stack;
+          if (typeof arg === "object") {
             try { return JSON.stringify(arg, null, 2); }
             catch { return "[Unserializable object]"; }
           }
@@ -33,27 +39,24 @@ export default function CodeRunner({ code = "" }) {
         }
 
         function push(type, ...args) {
-          logs.push({ type, message: args.map(stringify).join(' ') });
+          logs.push({ type, message: args.map(stringify).join(" ") });
         }
 
-        console.log = (...a) => { push('log', ...a); originalLog(...a); };
-        console.error = (...a) => { push('error', ...a); originalError(...a); };
-        console.warn = (...a) => { push('warn', ...a); originalWarn(...a); };
-        console.info = (...a) => { push('info', ...a); originalInfo(...a); };
+        console.log = (...a) => { push("log", ...a); originalLog(...a); };
+        console.error = (...a) => { push("error", ...a); originalError(...a); };
+        console.warn = (...a) => { push("warn", ...a); originalWarn(...a); };
+        console.info = (...a) => { push("info", ...a); originalInfo(...a); };
 
-        window.onerror = (msg, src, line, col, err) => {
-          push('error', err?.stack || msg);
-          send(performance.now() - start);
-        };
+        const send = (time) =>
+          parent.postMessage({ source: "runner", logs, time }, "*");
 
-        const send = (time) => parent.postMessage({ source: 'runner', logs, time }, '*');
         const start = performance.now();
 
         try {
           new Function(\`${escapedCode}\`)();
           send(performance.now() - start);
         } catch (err) {
-          push('error', err.stack || err.message);
+          push("error", err.stack || err.message);
           send(performance.now() - start);
         }
       })();
@@ -62,19 +65,39 @@ export default function CodeRunner({ code = "" }) {
   <body></body>
 </html>`;
 
-    const iframe = iframeRef.current;
-    if (iframe) {
-      iframe.srcdoc = sandboxHtml;
-      setExecTime(null);
+    if (iframeRef.current) {
+      iframeRef.current.srcdoc = sandboxHtml;
       setLogs([]);
+      setExecTime(null);
     }
-  };
+  }, [code]);
 
   const clearLogs = () => {
     setLogs([]);
     setExecTime(null);
   };
 
+  /**
+   * 🔥 AUTO-RUN WITH 2s DEBOUNCE
+   */
+  useEffect(() => {
+    // Clear any pending run
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      runCode();
+    }, 2000);
+
+    return () => {
+      clearTimeout(debounceTimerRef.current);
+    };
+  }, [code, runCode]);
+
+  /**
+   * Listen for sandbox results
+   */
   useEffect(() => {
     const listener = (e) => {
       if (e.data?.source === "runner") {
@@ -83,14 +106,18 @@ export default function CodeRunner({ code = "" }) {
         setIsRunning(false);
       }
     };
+
     window.addEventListener("message", listener);
     return () => window.removeEventListener("message", listener);
   }, []);
 
-  // Auto scroll to latest log
+  /**
+   * Auto-scroll logs
+   */
   useEffect(() => {
     if (logContainerRef.current) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+      logContainerRef.current.scrollTop =
+        logContainerRef.current.scrollHeight;
     }
   }, [logs]);
 
@@ -108,36 +135,17 @@ export default function CodeRunner({ code = "" }) {
   };
 
   return (
-    <div
-      className="
-        flex flex-col h-full w-full
-        bg-[var(--panel-color)]
-        border-l-0 md:border-l border-t md:border-t-0 border-[var(--border-color)]
-        overflow-hidden rounded-lg shadow-sm
-        transition-all
-      "
-    >
+    <div className="flex flex-col h-full w-full bg-[var(--panel-color)] overflow-hidden rounded-lg">
       {/* Header */}
-      <div
-        className="
-          flex items-center justify-between
-          mt-2 px-4 py-2 bg-[var(--bg-color)]/80 backdrop-blur-sm
-        "
-      >
-        <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-color)]">
+      <div className="flex items-center justify-between mt-2 px-4 py-2 bg-[var(--bg-color)]/80">
+        <div className="flex items-center gap-2 text-sm font-medium">
           <Terminal className="w-4 h-4 text-[var(--primary-color)]" />
           Console
         </div>
 
         <div className="flex items-center gap-2">
           {execTime && (
-            <span
-              className="
-                text-xs px-2 py-0.5 rounded-md border border-[var(--border-color)]
-                bg-[var(--bg-color)] text-[var(--text-color)] opacity-80
-                animate-in fade-in duration-200
-              "
-            >
+            <span className="text-xs px-2 py-0.5 rounded-md border">
               {execTime} ms
             </span>
           )}
@@ -145,13 +153,7 @@ export default function CodeRunner({ code = "" }) {
           <button
             onClick={runCode}
             disabled={isRunning}
-            className={`
-              flex items-center gap-1 px-4 py-1 text-sm rounded-md border
-              border-[var(--border-color)] bg-[var(--bg-color)]
-              text-[var(--text-color)] transition-all
-              hover:bg-[var(--primary-color)] hover:text-white
-              active:scale-[0.97] disabled:opacity-60
-            `}
+            className="flex items-center gap-1 px-4 py-1 text-sm rounded-md border"
           >
             {isRunning ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -163,12 +165,7 @@ export default function CodeRunner({ code = "" }) {
 
           <button
             onClick={clearLogs}
-            className="
-              flex items-center gap-1 px-4 py-1 text-sm rounded-md border
-              border-[var(--border-color)] bg-[var(--bg-color)]
-              text-[var(--text-color)] hover:bg-[var(--primary-color)]
-              hover:text-white active:scale-[0.97] transition-all
-            "
+            className="flex items-center gap-1 px-4 py-1 text-sm rounded-md border"
           >
             <Trash className="w-4 h-4" />
             Clear
@@ -176,27 +173,18 @@ export default function CodeRunner({ code = "" }) {
         </div>
       </div>
 
-      {/* Logs Display */}
+      {/* Logs */}
       <div
         ref={logContainerRef}
-        className="
-          flex-1 overflow-auto
-          p-4 font-mono text-sm leading-relaxed
-          bg-[var(--bg-color)]
-          text-[var(--text-color)]
-          shadow-inner
-          transition-all
-        "
+        className="flex-1 overflow-auto p-4 font-mono text-sm"
       >
         {logs.length === 0 ? (
-          <p className="text-[var(--muted-text,#777)] italic opacity-70">
-            No output yet…
-          </p>
+          <p className="italic opacity-70">No output yet…</p>
         ) : (
           logs.map((log, i) => (
             <div
               key={i}
-              className={`mb-1 whitespace-pre-wrap break-words ${getColor(log.type)}`}
+              className={`mb-1 whitespace-pre-wrap ${getColor(log.type)}`}
             >
               {log.message}
             </div>
@@ -204,8 +192,12 @@ export default function CodeRunner({ code = "" }) {
         )}
       </div>
 
-      {/* Hidden Sandbox */}
-      <iframe ref={iframeRef} title="sandbox" sandbox="allow-scripts" className="hidden" />
+      <iframe
+        ref={iframeRef}
+        title="sandbox"
+        sandbox="allow-scripts"
+        className="hidden"
+      />
     </div>
   );
 }

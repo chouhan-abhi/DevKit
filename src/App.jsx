@@ -1,15 +1,17 @@
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Suspense, lazy, useMemo, useEffect } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 
 import { appList } from "./utils/Constants";
 import AppBarIcon from "./components/AppBarIcon";
 import Loader from "./utils/Loader";
+import AppHeader from "./components/AppHeader";
 
 import { themeManager } from "./utils/themeManger";
-import AppHeader from "./components/AppHeader";
 import { useQuote } from "./hooks/useQuote";
 
-// ✅ Lazy-loaded screens
+/* ----------------------------------
+ * Lazy-loaded screens
+ * ---------------------------------- */
 const Home = lazy(() => import("./components/Home"));
 const Dashboard = lazy(() => import("./components/Dashboard"));
 const Settings = lazy(() => import("./components/Settings"));
@@ -22,85 +24,103 @@ const MermaidEditor = lazy(() => import("./components/MermaidEditor"));
 const GitHubTrending = lazy(() => import("./components/GitHubTrending"));
 const SvgEditor = lazy(() => import("./components/svgEditor/SvgEditor"));
 
+/* ----------------------------------
+ * Route configuration
+ * ---------------------------------- */
+const ROUTES = [
+	{ path: "/", element: <Home /> },
+	{ path: "/dashboard", element: <Dashboard /> },
+	{ path: "/tasks", element: <TodoList /> },
+	{ path: "/js-ide", element: <JSIDEApp /> },
+	{ path: "/diff-editor", element: <CodeDiffViewer /> },
+	{ path: "/json", element: <JsonEditor /> },
+	{ path: "/markdown", element: <MarkdownEditor /> },
+	{ path: "/mermaid-draw", element: <MermaidEditor /> },
+	{ path: "/github-trending", element: <GitHubTrending /> },
+	{ path: "/svg-editor", element: <SvgEditor /> },
+	{ path: "/settings", element: <Settings /> },
+];
+
 function App() {
-	const location = useLocation();
-	
-	// Initialize theme on mount
+	const { pathname } = useLocation();
+
+	/* ----------------------------------
+	 * Side effects
+	 * ---------------------------------- */
 	useEffect(() => {
 		themeManager.init();
 	}, []);
+
 	useQuote();
+
+	/* ----------------------------------
+	 * Derived data
+	 * ---------------------------------- */
+	const sidebarApps = useMemo(
+		() => appList.filter((app) => app.key),
+		[],
+	);
+
+	const isHome = pathname === "/";
 
 	return (
 		<div className="w-full h-screen bg-(--bg-color) font-inter overflow-hidden">
-			{/* Top Header - dynamic */}
 			<AppHeader />
 
-			<div className="flex h-full pt-[60px]">
-				{/* ✅ FIXED SIDEBAR - Responsive: Bottom on small screens, Right on larger screens */}
+			<div className="flex h-full pt-[50px]">
+				{/* ----------------------------------
+				 * Sidebar
+				 * ---------------------------------- */}
 				<aside
 					className="
-            fixed bottom-0 left-0 right-0 h-16 w-full
-            md:fixed md:right-0 md:top-0 md:h-full md:w-16 md:left-auto
-            flex flex-row md:flex-col items-center justify-around md:justify-between 
-            px-4 md:px-0 pt-0 md:pt-4 gap-4 md:gap-6 pb-0 md:pb-6 z-40
-            transition-all overflow-visible border-t md:border-t-0
-          "
+						fixed bottom-0 left-0 right-0 h-16 w-full
+						md:fixed md:right-0 md:top-0 md:h-full md:w-16 md:left-auto
+						flex flex-row md:flex-col items-center justify-around md:justify-between
+						px-4 md:px-0 pt-0 md:pt-4 gap-4 md:gap-6 pb-0 md:pb-6
+						z-40 border-t md:border-t-0 transition-all
+					"
 					style={{
 						background: "var(--header-bg)",
 						color: "var(--text-primary)",
 						borderColor: "var(--border-color)",
 					}}
 				>
-					<div className="overflow-visible order-2 md:order-1">
-						<Link key={appList[0].key} to="/" className="block">
+					{/* Home */}
+					<div className="order-2 md:order-1">
+						<Link to="/">
 							<AppBarIcon
-								label={appList[0].label}
-								description={appList[0].description}
-								icon={appList[0].icon}
-								isActive={location.pathname === "/"}
+								{...appList[0]}
+								isActive={isHome}
+								isVisible={isHome}
 							/>
 						</Link>
 					</div>
-					<div className="flex flex-row md:flex-col items-center gap-4 md:gap-6 overflow-visible order-1 md:order-2">
-						{useMemo(
-							() =>
-								appList
-									.filter((app) => app.key !== "")
-									.map((app) => {
-										const appPath = `/${app.key}`;
-										const isActive = location.pathname === appPath;
-										return (
-											<Link key={app.key} to={appPath} className="block">
-												<AppBarIcon
-													label={app.label}
-													description={app.description}
-													icon={app.icon}
-													isActive={isActive}
-												/>
-											</Link>
-										);
-									}),
-							[location.pathname],
-						)}
+
+					{/* Apps */}
+					<div className="flex flex-row md:flex-col items-center gap-4 md:gap-6 order-1 md:order-2">
+						{sidebarApps.map((app) => {
+							const appPath = `/${app.key}`;
+							return (
+								<Link key={app.key} to={appPath}>
+									<AppBarIcon
+										{...app}
+										isActive={pathname === appPath}
+									/>
+								</Link>
+							);
+						})}
 					</div>
 				</aside>
 
-				{/* ✅ MAIN CONTENT */}
-				<main className="flex-1 overflow-y-auto pb-16 md:pb-0 md:pl-16">
+				{/* ----------------------------------
+				 * Main content
+				 * ---------------------------------- */}
+				<main className="flex-1 overflow-y-auto pb-16 md:pb-0">
 					<Suspense fallback={<Loader />}>
 						<Routes>
-							<Route path="/" element={<Home />} />
-							<Route path="/dashboard" element={<Dashboard />} />
-							<Route path="/tasks" element={<TodoList />} />
-							<Route path="/js-ide" element={<JSIDEApp />} />
-							<Route path="/diff-editor" element={<CodeDiffViewer />} />
-							<Route path="/JSON" element={<JsonEditor />} />
-							<Route path="/markdown" element={<MarkdownEditor />} />
-							<Route path="/mermaid-draw" element={<MermaidEditor />} />
-							<Route path="/github-trending" element={<GitHubTrending />} />
-							<Route path="/svg-editor" element={<SvgEditor />} />
-							<Route path="/settings" element={<Settings />} />
+							{ROUTES.map(({ path, element }) => (
+								<Route key={path} path={path} element={element} />
+							))}
 							<Route path="*" element={<Navigate to="/" replace />} />
 						</Routes>
 					</Suspense>

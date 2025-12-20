@@ -1,7 +1,9 @@
 import * as Lucide from "lucide-react";
 
-export default function AppBarIcon({ label, description, icon, isActive = false }) {
+export default function AppBarIcon({ label, description, icon, isActive = false, isVisible = true }) {
 	const Icon = icon ? Lucide[icon] : null;
+
+	if(isVisible === false) return null;
 
 	return (
 		<div className="relative group">
