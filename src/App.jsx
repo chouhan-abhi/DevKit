@@ -1,6 +1,6 @@
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Suspense, lazy, useEffect, useMemo } from "react";
-
+import "@monaco-editor/react";
 import { appList } from "./utils/Constants";
 import AppBarIcon from "./components/AppBarIcon";
 import Loader from "./utils/Loader";
