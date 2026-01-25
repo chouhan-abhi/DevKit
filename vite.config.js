@@ -8,9 +8,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  optimizeDeps: {
-    include: ["monaco-editor"]
-  },
   server: {
     proxy: {
       '/api/quote': {

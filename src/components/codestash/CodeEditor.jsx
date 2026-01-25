@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import Editor from "@monaco-editor/react";
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+const Editor = lazy(() => import("@monaco-editor/react"));
 import { themeManager } from "../../utils/themeManger";
 
 const CodeEditor = ({ initialCode = "", fileName = "script.js", onCodeChange }) => {
@@ -10,9 +10,9 @@ const CodeEditor = ({ initialCode = "", fileName = "script.js", onCodeChange }) 
   useEffect(() => {
     const savedTheme = themeManager.getTheme();
     const finalTheme =
-      savedTheme === "dark" || 
-      (savedTheme === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches)
+      savedTheme === "dark" ||
+        (savedTheme === "system" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
         ? "vs-dark"
         : "light";
     setEditorTheme(finalTheme);
@@ -55,14 +55,16 @@ const CodeEditor = ({ initialCode = "", fileName = "script.js", onCodeChange }) 
     >
       {/* Editor Body */}
       <div className="flex-1">
-        <Editor
-          height="100%"
-          language="javascript"
-          value={code}
-          theme={editorTheme}
-          onChange={handleCodeChange}
-          options={editorOptions}
-        />
+        <Suspense fallback={<div className="p-4">Loading Editor...</div>}>
+          <Editor
+            height="100%"
+            language="javascript"
+            value={code}
+            theme={editorTheme}
+            onChange={handleCodeChange}
+            options={editorOptions}
+          />
+        </Suspense>
       </div>
     </div>
   );

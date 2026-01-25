@@ -1,6 +1,5 @@
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Suspense, lazy, useEffect, useMemo } from "react";
-import "@monaco-editor/react";
 import { appList } from "./utils/Constants";
 import AppBarIcon from "./components/AppBarIcon";
 import Loader from "./utils/Loader";
@@ -89,7 +88,7 @@ function App() {
 					<div className="order-2 md:order-1">
 						<Link to="/">
 							<AppBarIcon
-								{...appList[0]}
+								{...(({ key, ...rest }) => rest)(appList[0])}
 								isActive={isHome}
 								isVisible={isHome}
 							/>
@@ -98,10 +97,10 @@ function App() {
 
 					{/* Apps */}
 					<div className="flex flex-row md:flex-col items-center gap-4 md:gap-6 order-1 md:order-2">
-						{sidebarApps.map((app) => {
-							const appPath = `/${app.key}`;
+						{sidebarApps.map(({ key, ...app }) => {
+							const appPath = `/${key}`;
 							return (
-								<Link key={app.key} to={appPath}>
+								<Link key={key} to={appPath}>
 									<AppBarIcon
 										{...app}
 										isActive={pathname === appPath}

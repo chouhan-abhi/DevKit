@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import React, { useRef, useState, useEffect, lazy } from "react";
+const  Editor = lazy(() => import("@monaco-editor/react"));
 import DiffMatchPatch from "diff-match-patch";
 import { themeManager } from "../utils/themeManger";
 import { storage } from "../utils/StorageManager"; // ✅ Use same storage system

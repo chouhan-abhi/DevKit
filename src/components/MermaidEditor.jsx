@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import Editor from "@monaco-editor/react";
+import React, { useState, useEffect, useRef, lazy } from "react";
+const  Editor = lazy(() => import("@monaco-editor/react"));
 import { 
   Save, 
   FileText, 

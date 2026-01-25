@@ -53,12 +53,6 @@ export const appList = [
     icon: "TrendingUp"
   },
   {
-    key: "markdown",
-    label: "Markdown Editor",
-    description: "Write, preview, and manage your markdown files",
-    icon: "FileText"
-  },
-  {
     key: "settings",
     label: "Settings",
     description: "Customize your themes, preferences, and development environment.",

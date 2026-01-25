@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import React, { useState, useEffect, lazy } from "react";
+const  Editor = lazy(() => import("@monaco-editor/react"));
 import { JsonView, darkStyles, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import { AlertCircle, CheckCircle, Code, Minimize2 } from "lucide-react";
