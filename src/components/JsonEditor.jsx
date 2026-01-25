@@ -108,7 +108,7 @@ const JsonEditor = () => {
           {/* Toolbar */}
           <div
             className="flex items-center gap-3 px-4 py-3 mt-2 border-b"
-            style={{ background: "var(--panel-color)", borderColor: "var(--border-color)" }}
+            style={{ borderColor: "var(--border-color)" }}
           >
             <button
               onClick={formatJson}

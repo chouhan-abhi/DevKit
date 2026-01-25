@@ -32,15 +32,8 @@ const CodeEditor = ({ initialCode = "", fileName = "script.js", onCodeChange }) 
       fontSize: 14,
       fontFamily: "JetBrains Mono, monospace",
       lineNumbers: "on",
-      automaticLayout: true,
-      minimap: { enabled: true },
       smoothScrolling: true,
       scrollBeyondLastLine: false,
-      cursorBlinking: "smooth",
-      roundedSelection: true,
-      padding: { top: 12 },
-      wordWrap: "on",
-      scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
     }),
     []
   );
@@ -58,6 +51,7 @@ const CodeEditor = ({ initialCode = "", fileName = "script.js", onCodeChange }) 
         <Suspense fallback={<div className="p-4">Loading Editor...</div>}>
           <Editor
             height="100%"
+            width="100%"
             language="javascript"
             value={code}
             theme={editorTheme}
