@@ -1,42 +1,66 @@
-import React, { useRef, useState, useEffect, lazy } from "react";
-const  Editor = lazy(() => import("@monaco-editor/react"));
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
 import DiffMatchPatch from "diff-match-patch";
 import { themeManager } from "../utils/themeManger";
-import { storage } from "../utils/StorageManager"; // ✅ Use same storage system
+import { storage } from "../utils/StorageManager";
+
+const Editor = lazy(() => import("@monaco-editor/react"));
 
 export default function DualEditableDiff() {
-  const dmp = new DiffMatchPatch();
+  /* -------------------------------------------------- */
+  /* Stable instances & refs */
+  /* -------------------------------------------------- */
+
+  const dmpRef = useRef(null);
+  if (!dmpRef.current) {
+    dmpRef.current = new DiffMatchPatch();
+  }
 
   const leftRef = useRef(null);
   const rightRef = useRef(null);
   const leftDecorRef = useRef([]);
   const rightDecorRef = useRef([]);
 
-  // ✅ Define persistent keys
   const LEFT_KEY = "diff-editor-left";
   const RIGHT_KEY = "diff-editor-right";
 
-  // ✅ Load saved or fallback values
-  const [leftCode, setLeftCode] = useState(() => storage.get(LEFT_KEY, "// Left editor"));
-  const [rightCode, setRightCode] = useState(() => storage.get(RIGHT_KEY, "// Right editor"));
+  /* -------------------------------------------------- */
+  /* State */
+  /* -------------------------------------------------- */
 
-  // ✅ Theme handling
+  const [leftCode, setLeftCode] = useState(() =>
+    storage.get(LEFT_KEY, "// Left editor")
+  );
+  const [rightCode, setRightCode] = useState(() =>
+    storage.get(RIGHT_KEY, "// Right editor")
+  );
+
   const getMonacoTheme = (theme) => {
-    const resolvedTheme =
+    const resolved =
       theme === "system"
         ? window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
         : theme;
-    return resolvedTheme === "dark" ? "vs-dark" : "vs-light";
+    return resolved === "dark" ? "vs-dark" : "vs-light";
   };
 
-  const [monacoTheme, setMonacoTheme] = useState(() => {
-    const currentTheme = themeManager.getTheme();
-    return getMonacoTheme(currentTheme);
-  });
+  const [monacoTheme, setMonacoTheme] = useState(() =>
+    getMonacoTheme(themeManager.getTheme())
+  );
 
-  // ✅ Create Monaco text range
+  /* -------------------------------------------------- */
+  /* Helpers */
+  /* -------------------------------------------------- */
+
+  const editorsReady = () =>
+    leftRef.current?.getModel() && rightRef.current?.getModel();
+
   const createRange = (model, start, end) => {
     const s = model.getPositionAt(start);
     const e = model.getPositionAt(end);
@@ -48,118 +72,145 @@ export default function DualEditableDiff() {
     };
   };
 
-  /** ✅ Core Diff Function */
+  /* -------------------------------------------------- */
+  /* Diff logic */
+  /* -------------------------------------------------- */
+
   const updateDiff = (left, right) => {
+    if (!editorsReady()) return;
+
     const leftEditor = leftRef.current;
     const rightEditor = rightRef.current;
-    if (!leftEditor || !rightEditor) return;
 
     const leftModel = leftEditor.getModel();
     const rightModel = rightEditor.getModel();
-    if (!leftModel || !rightModel) return;
 
+    const dmp = dmpRef.current;
     const diffs = dmp.diff_main(left, right);
     dmp.diff_cleanupSemantic(diffs);
 
-    let leftPointer = 0;
-    let rightPointer = 0;
+    let leftPtr = 0;
+    let rightPtr = 0;
 
-    const leftDecorations = [];
-    const rightDecorations = [];
+    const leftDecors = [];
+    const rightDecors = [];
 
-    diffs.forEach(([type, text]) => {
+    for (const [type, text] of diffs) {
       const len = text.length;
 
-      // Text removed → highlight in LEFT as red
       if (type === -1) {
-        const range = createRange(leftModel, leftPointer, leftPointer + len);
-        leftDecorations.push({
-          range,
+        leftDecors.push({
+          range: createRange(leftModel, leftPtr, leftPtr + len),
           options: { inlineClassName: "diff-removed-inline" },
         });
       }
 
-      // Text added → highlight in RIGHT as green
       if (type === 1) {
-        const range = createRange(rightModel, rightPointer, rightPointer + len);
-        rightDecorations.push({
-          range,
+        rightDecors.push({
+          range: createRange(rightModel, rightPtr, rightPtr + len),
           options: { inlineClassName: "diff-added-inline" },
         });
       }
 
-      if (type !== 1) leftPointer += len;
-      if (type !== -1) rightPointer += len;
-    });
+      if (type !== 1) leftPtr += len;
+      if (type !== -1) rightPtr += len;
+    }
 
-    // Apply decorations
-    leftDecorRef.current = leftEditor.deltaDecorations(leftDecorRef.current, leftDecorations);
-    rightDecorRef.current = rightEditor.deltaDecorations(rightDecorRef.current, rightDecorations);
+    leftDecorRef.current = leftEditor.deltaDecorations(
+      leftDecorRef.current,
+      leftDecors
+    );
+    rightDecorRef.current = rightEditor.deltaDecorations(
+      rightDecorRef.current,
+      rightDecors
+    );
   };
 
-  // ✅ Update + persist LEFT
-  const onLeftChange = (value) => {
-    const newVal = value ?? "";
-    setLeftCode(newVal);
-    storage.set(LEFT_KEY, newVal);
-    updateDiff(newVal, rightCode);
-  };
+  /* -------------------------------------------------- */
+  /* Effects */
+  /* -------------------------------------------------- */
 
-  // ✅ Update + persist RIGHT
-  const onRightChange = (value) => {
-    const newVal = value ?? "";
-    setRightCode(newVal);
-    storage.set(RIGHT_KEY, newVal);
-    updateDiff(leftCode, newVal);
-  };
-
-  // ✅ Handle theme changes dynamically
+  // Theme updates
   useEffect(() => {
     const handler = (e) => {
-      const theme = e.detail === "dark" ? "vs-dark" : "vs-light";
-      setMonacoTheme(theme);
+      setMonacoTheme(e.detail === "dark" ? "vs-dark" : "vs-light");
     };
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
-  // ✅ Run diff when mounted or after restoring saved state
+  // Diff trigger (single source of truth)
   useEffect(() => {
-    const timeout = setTimeout(() => updateDiff(leftCode, rightCode), 200);
-    return () => clearTimeout(timeout);
-  }, [leftCode, rightCode]);
+    if (!editorsReady()) return;
+
+    const id = requestAnimationFrame(() => {
+      updateDiff(leftCode, rightCode);
+    });
+
+    return () => cancelAnimationFrame(id);
+  }, [leftCode, rightCode, monacoTheme]);
+
+  /* -------------------------------------------------- */
+  /* Editor options (reduces glitches a LOT) */
+  /* -------------------------------------------------- */
+
+  const editorOptions = {
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    minimap: { enabled: false },
+    smoothScrolling: true,
+    cursorBlinking: "smooth",
+    renderWhitespace: "selection",
+    padding: { top: 8 },
+  };
+
+  /* -------------------------------------------------- */
+  /* Render */
+  /* -------------------------------------------------- */
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 h-screen gap-2 p-2 bg-[var(--bg-color)]">
-      {/* ✅ LEFT EDITOR */}
-      <div className="flex-1 md:h-full min-h-[300px]">
+    <div className="flex flex-col md:grid md:grid-cols-2 h-screen gap-2 p-2 bg-[var(--bg-color)] monaco-root">
+      {/* LEFT EDITOR */}
+      <Suspense fallback={<div className="h-full">Loading editor…</div>}>
         <Editor
           height="100%"
           language="javascript"
           theme={monacoTheme}
           value={leftCode}
+          options={editorOptions}
           onMount={(editor) => {
             leftRef.current = editor;
+            setTimeout(() => updateDiff(leftCode, rightCode), 0);
           }}
-          onChange={onLeftChange}
+          onChange={(v) => {
+            const val = v ?? "";
+            setLeftCode(val);
+            storage.set(LEFT_KEY, val);
+          }}
         />
-      </div>
+      </Suspense>
 
-      {/* ✅ RIGHT EDITOR */}
-      <div className="flex-1 md:h-full min-h-[300px]">
+      {/* RIGHT EDITOR */}
+      <Suspense fallback={<div className="h-full">Loading editor…</div>}>
         <Editor
           height="100%"
           language="javascript"
           theme={monacoTheme}
           value={rightCode}
+          options={editorOptions}
           onMount={(editor) => {
             rightRef.current = editor;
+            setTimeout(() => updateDiff(leftCode, rightCode), 0);
           }}
-          onChange={onRightChange}
+          onChange={(v) => {
+            const val = v ?? "";
+            setRightCode(val);
+            storage.set(RIGHT_KEY, val);
+          }}
         />
-      </div>
+      </Suspense>
 
-      {/* ✅ Diff Highlight Styles */}
+      {/* Diff styles */}
       <style>
         {`
           .diff-added-inline {

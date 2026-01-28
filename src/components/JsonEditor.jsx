@@ -1,16 +1,33 @@
-import React, { useState, useEffect, lazy } from "react";
-const  Editor = lazy(() => import("@monaco-editor/react"));
+import React, {
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+  useRef,
+} from "react";
 import { JsonView, darkStyles, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import { AlertCircle, CheckCircle, Code, Minimize2 } from "lucide-react";
 import { themeManager } from "../utils/themeManger";
 import { storage } from "../utils/StorageManager";
 
+const Editor = lazy(() => import("@monaco-editor/react"));
+
 const JsonEditor = () => {
+  /* -------------------------------------------------- */
+  /* Constants & refs */
+  /* -------------------------------------------------- */
+
   const STORAGE_KEY = "json-editor-content";
+  const editorRef = useRef(null);
+  const parseTimerRef = useRef(null);
 
   const fallbackJson = "{\n  \"name\": \"User\",\n  \"age\": 24\n}";
   const savedJson = storage.get(STORAGE_KEY, fallbackJson);
+
+  /* -------------------------------------------------- */
+  /* State */
+  /* -------------------------------------------------- */
 
   const [jsonText, setJsonText] = useState(savedJson);
   const [jsonObj, setJsonObj] = useState(() => {
@@ -22,58 +39,77 @@ const JsonEditor = () => {
   });
   const [error, setError] = useState(null);
 
-  // ✅ Determine theme modes
-  const getThemeMode = (theme) => {
-    const resolved =
-      theme === "system"
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-        : theme;
-    return resolved;
-  };
+  /* -------------------------------------------------- */
+  /* Theme handling */
+  /* -------------------------------------------------- */
 
-  const [themeMode, setThemeMode] = useState(getThemeMode(themeManager.getTheme()));
+  const getThemeMode = (theme) =>
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme;
 
-  // ✅ Monaco theme mapping
-  const getMonacoTheme = (mode) => (mode === "dark" ? "vs-dark" : "vs-light");
-  const [monacoTheme, setMonacoTheme] = useState(getMonacoTheme(themeMode));
+  const [themeMode, setThemeMode] = useState(() =>
+    getThemeMode(themeManager.getTheme())
+  );
 
-  // ✅ React to theme changes
+  const monacoTheme = themeMode === "dark" ? "vs-dark" : "vs-light";
+  const jsonViewStyle = themeMode === "dark" ? darkStyles : defaultStyles;
+
   useEffect(() => {
     const handler = (e) => {
-      const mode = e.detail;
-      setThemeMode(mode);
-      setMonacoTheme(getMonacoTheme(mode));
+      setThemeMode(e.detail);
     };
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
-  // ✅ Persist code
+  /* -------------------------------------------------- */
+  /* Persist JSON text */
+  /* -------------------------------------------------- */
+
   useEffect(() => {
     storage.set(STORAGE_KEY, jsonText);
   }, [jsonText]);
 
-  // ✅ Editor change
+  /* -------------------------------------------------- */
+  /* Debounced JSON validation (key fix) */
+  /* -------------------------------------------------- */
+
+  useEffect(() => {
+    clearTimeout(parseTimerRef.current);
+
+    parseTimerRef.current = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(jsonText);
+        setJsonObj(parsed);
+        setError(null);
+      } catch (err) {
+        setJsonObj(null);
+        setError(err.message);
+      }
+    }, 300); // ← debounce
+
+    return () => clearTimeout(parseTimerRef.current);
+  }, [jsonText]);
+
+  /* -------------------------------------------------- */
+  /* Editor change */
+  /* -------------------------------------------------- */
+
   const handleEditorChange = (value) => {
-    const safeVal = value ?? "";
-    setJsonText(safeVal);
-    try {
-      const parsed = JSON.parse(safeVal);
-      setJsonObj(parsed);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    }
+    setJsonText(value ?? "");
   };
 
-  // ✅ JSON format + minify
+  /* -------------------------------------------------- */
+  /* Actions */
+  /* -------------------------------------------------- */
+
   const formatJson = () => {
     try {
       const parsed = JSON.parse(jsonText);
       setJsonText(JSON.stringify(parsed, null, 2));
-      setJsonObj(parsed);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -84,15 +120,30 @@ const JsonEditor = () => {
     try {
       const parsed = JSON.parse(jsonText);
       setJsonText(JSON.stringify(parsed));
-      setJsonObj(parsed);
       setError(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // ✅ Choose correct JsonView style
-  const jsonViewStyle = themeMode === "dark" ? darkStyles : defaultStyles;
+  /* -------------------------------------------------- */
+  /* Monaco options (glitch prevention) */
+  /* -------------------------------------------------- */
+
+  const editorOptions = {
+    minimap: { enabled: false },
+    fontSize: 14,
+    lineNumbers: "on",
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    tabSize: 2,
+    smoothScrolling: true,
+    padding: { top: 8 },
+  };
+
+  /* -------------------------------------------------- */
+  /* Render */
+  /* -------------------------------------------------- */
 
   return (
     <div
@@ -100,7 +151,7 @@ const JsonEditor = () => {
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
       <div className="flex flex-col md:flex-row flex-1 rounded-lg overflow-hidden shadow-sm">
-        {/* Left: JSON Editor */}
+        {/* LEFT: JSON Editor */}
         <div
           className="flex-1 flex flex-col border-r-0 md:border-r border-b md:border-b-0"
           style={{ borderColor: "var(--border-color)" }}
@@ -112,20 +163,18 @@ const JsonEditor = () => {
           >
             <button
               onClick={formatJson}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
               style={{ background: "var(--sidebar-icon-bg)" }}
               type="button"
-              title="Format/Beautify JSON"
             >
               <Code size={16} /> Format
             </button>
 
             <button
               onClick={minifyJson}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
+              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 text-white"
               style={{ background: "var(--sidebar-icon-bg)" }}
               type="button"
-              title="Minify JSON"
             >
               <Minimize2 size={16} /> Minify
             </button>
@@ -147,31 +196,30 @@ const JsonEditor = () => {
           </div>
 
           {/* Monaco Editor */}
-          <Editor
-            height="100%"
-            theme={monacoTheme}
-            language="json"
-            value={jsonText}
-            onChange={handleEditorChange}
-            options={{
-              minimap: { enabled: true },
-              fontSize: 14,
-              lineNumbers: "on",
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              tabSize: 2,
-              smoothScrolling: true,
-            }}
-          />
+          <Suspense fallback={<div className="p-4">Loading editor…</div>}>
+            <div className="monaco-root">
+              <Editor
+                height="100%"
+                language="json"
+                theme={monacoTheme}
+                value={jsonText}
+                options={editorOptions}
+                onMount={(editor) => {
+                  editorRef.current = editor;
+                }}
+                onChange={handleEditorChange}
+              />
+            </div>
+          </Suspense>
         </div>
 
-        {/* Right: JSON Preview */}
+        {/* RIGHT: JSON Preview */}
         <div
           className="w-full md:w-[40%] overflow-auto p-6"
-          style={{ background: "var(--panel-color)", borderColor: "var(--border-color)" }}
+          style={{ background: "var(--panel-color)" }}
         >
           <h2
-            className="text-lg font-semibold mb-4 tracking-wide"
+            className="text-lg font-semibold mb-4"
             style={{ color: "var(--primary-color)" }}
           >
             JSON Structure

@@ -169,6 +169,18 @@ button:not([class*="bg-"]):hover {
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* ===================================================== */
+/* 🚑 MONACO CURSOR FIX (Firefox + Tailwind Animations)  */
+/* ===================================================== */
+
+.monaco-root,
+.monaco-root * {
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+
 .animate-fadeInUp { animation: fadeInUp 0.45s ease-out forwards; }
 .animate-slideIn  { animation: slideIn 0.25s ease-out forwards; }
 .animate-fadeIn   { animation: fadeIn 0.35s ease-in-out forwards; }

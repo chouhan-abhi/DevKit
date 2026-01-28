@@ -387,7 +387,7 @@ const SvgEditor = () => {
       </div>
 
       {/* Editor / Preview */}
-      <div className="flex flex-1 overflow-hidden mt-2">
+      <div className="flex flex-1 overflow-hidden mt-2 monaco-root">
         {!previewMode && (
           <Editor
             height="100%"
