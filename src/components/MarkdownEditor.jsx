@@ -1,28 +1,15 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  lazy,
-  Suspense,
-} from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { markdown as markdownLanguage } from "@codemirror/lang-markdown";
 import {
-  Save,
-  FileText,
-  Trash2,
-  Download,
-  Upload,
   Eye,
   Edit,
-  FileDown,
-  FileSpreadsheet,
   Copy,
   Check,
   Sparkles,
 } from "lucide-react";
 import { storage } from "../utils/StorageManager";
 import { themeManager } from "../utils/themeManger";
-
-const Editor = lazy(() => import("@monaco-editor/react"));
 
 /* -------------------------------------------------- */
 /* Markdown → HTML (unchanged, safe) */
@@ -72,7 +59,6 @@ const MarkdownEditor = () => {
   const initialMarkdown =
     "# Welcome to Markdown Editor\n\nStart writing your markdown here...";
 
-  const editorRef = useRef(null);
   const autosaveTimer = useRef(null);
 
   const [markdown, setMarkdown] = useState(() =>
@@ -92,23 +78,23 @@ const MarkdownEditor = () => {
   /* Theme handling */
   /* -------------------------------------------------- */
 
-  const getMonacoTheme = (theme) => {
+  const getEditorTheme = (theme) => {
     const resolved =
       theme === "system"
         ? window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
         : theme;
-    return resolved === "dark" ? "vs-dark" : "vs-light";
+    return resolved === "dark" ? "dark" : "light";
   };
 
-  const [monacoTheme, setMonacoTheme] = useState(() =>
-    getMonacoTheme(themeManager.getTheme())
+  const [editorTheme, setEditorTheme] = useState(() =>
+    getEditorTheme(themeManager.getTheme())
   );
 
   useEffect(() => {
     const handler = (e) =>
-      setMonacoTheme(e.detail === "dark" ? "vs-dark" : "vs-light");
+      setEditorTheme(e.detail === "dark" ? "dark" : "light");
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
@@ -159,74 +145,59 @@ const MarkdownEditor = () => {
     setMarkdown(cleaned.join("\n"));
   };
 
-  /* -------------------------------------------------- */
-  /* Monaco options (glitch-free) */
-  /* -------------------------------------------------- */
-
-  const editorOptions = {
-    minimap: { enabled: false },
-    fontSize: 14,
-    wordWrap: "on",
-    scrollBeyondLastLine: false,
-    automaticLayout: true,
-    smoothScrolling: true,
-    padding: { top: 8 },
-  };
-
-  /* -------------------------------------------------- */
-  /* Render */
-  /* -------------------------------------------------- */
+  const extensions = useMemo(() => [markdownLanguage()], []);
 
   return (
-    <div className="h-full w-full flex flex-col">
-      {/* Toolbar */}
-      <div className="flex gap-2 p-3 border-b">
-        <button onClick={formatMarkdown} className="btn">
+    <div className="h-full w-full p-2 flex flex-col">
+      <div className="flex gap-2 py-2 shrink-0">
+        <button
+          onClick={formatMarkdown}
+          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2"
+          style={{ background: "var(--sidebar-icon-bg)", color: "var(--sidebar-icon-text)" }}
+          type="button"
+        >
           <Sparkles size={16} /> Format
         </button>
-
-        <button onClick={handleCopy} className="btn">
+        <button
+          onClick={handleCopy}
+          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2"
+          style={{ background: "var(--sidebar-icon-bg)", color: "var(--sidebar-icon-text)" }}
+          type="button"
+        >
           {copied ? <Check size={16} /> : <Copy size={16} />}
           {copied ? "Copied" : "Copy"}
         </button>
-
-        <button onClick={() => setPreviewMode(!previewMode)} className="btn ml-auto">
+        <button
+          onClick={() => setPreviewMode(!previewMode)}
+          className="ml-auto px-3 py-1.5 rounded-lg text-sm flex items-center gap-2"
+          style={{ background: "var(--sidebar-icon-bg)", color: "var(--sidebar-icon-text)" }}
+          type="button"
+        >
           {previewMode ? <Edit size={16} /> : <Eye size={16} />}
           {previewMode ? "Edit" : "Preview"}
         </button>
       </div>
 
-      {/* Main */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {!previewMode && (
-          <div className="flex-1">
-            <Suspense fallback={<div className="p-4">Loading editor…</div>}>
-              <div className="monaco-root">
-                <Editor
-                  height="100%"
-                  language="markdown"
-                  theme={monacoTheme}
-                  value={markdown}
-                  options={editorOptions}
-                  onMount={(editor) => (editorRef.current = editor)}
-                  onChange={(v) => setMarkdown(v ?? "")}
-                />
-              </div>
-            </Suspense>
+          <div className="flex-1 min-h-[200px] overflow-hidden rounded-md border-r" style={{ borderColor: "var(--border-color)" }}>
+            <CodeMirror
+              value={markdown}
+              height="100%"
+              minHeight="200px"
+              theme={editorTheme}
+              extensions={extensions}
+              onChange={(v) => setMarkdown(v ?? "")}
+              basicSetup={{ lineNumbers: true, foldGutter: true }}
+            />
           </div>
         )}
-
         <div
-          className={`overflow-auto ${previewMode ? "w-full" : "w-1/2"
-            }`}
+          className={`overflow-auto rounded-md ${previewMode ? "w-full" : "w-1/2"}`}
           style={{ background: "var(--panel-color)" }}
         >
           <div className="p-6 prose max-w-none">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: markdownToHtml(markdown),
-              }}
-            />
+            <div dangerouslySetInnerHTML={{ __html: markdownToHtml(markdown) }} />
           </div>
         </div>
       </div>

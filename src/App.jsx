@@ -114,7 +114,7 @@ function App() {
 				{/* ----------------------------------
 				 * Main content
 				 * ---------------------------------- */}
-				<main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+				<main className="flex-1 overflow-y-auto pr-16 pb-16 md:pb-0">
 					<Suspense fallback={<Loader />}>
 						<Routes>
 							{ROUTES.map(({ path, element }) => (

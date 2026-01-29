@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef, lazy } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { xml } from "@codemirror/lang-xml";
 import {
   Save,
   FileText,
@@ -17,7 +19,6 @@ import {
 } from "lucide-react";
 import { storage } from "../../utils/StorageManager";
 import { themeManager } from "../../utils/themeManger";
-const Editor = lazy(() => import("@monaco-editor/react"));
 
 const SvgEditor = () => {
   const initialSvg = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -50,23 +51,23 @@ const SvgEditor = () => {
   const previewRef = useRef(null);
   const hasRestoredFile = useRef(false);
 
-  const getMonacoTheme = (theme) => {
+  const getEditorTheme = (theme) => {
     const resolvedTheme =
       theme === "system"
         ? window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
         : theme;
-    return resolvedTheme === "dark" ? "vs-dark" : "vs-light";
+    return resolvedTheme === "dark" ? "dark" : "light";
   };
 
-  const [monacoTheme, setMonacoTheme] = useState(() =>
-    getMonacoTheme(themeManager.getTheme())
+  const [editorTheme, setEditorTheme] = useState(() =>
+    getEditorTheme(themeManager.getTheme())
   );
 
   useEffect(() => {
     const handler = (e) => {
-      setMonacoTheme(e.detail === "dark" ? "vs-dark" : "vs-light");
+      setEditorTheme(e.detail === "dark" ? "dark" : "light");
     };
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
@@ -243,9 +244,9 @@ const SvgEditor = () => {
   };
 
   return (
-    <div className="h-full flex flex-col w-[96%]">
+    <div className="h-full flex flex-col w-full p-2">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 mt-2 px-4 py-3 border-b" style={{ borderColor: "var(--panel-color)" }}>
+      <div className="flex flex-wrap items-center gap-3 mt-2 py-2 border-b" style={{ borderColor: "var(--panel-color)" }}>
         {/* Save */}
         <div className="relative">
           <button
@@ -387,30 +388,24 @@ const SvgEditor = () => {
       </div>
 
       {/* Editor / Preview */}
-      <div className="flex flex-1 overflow-hidden mt-2 monaco-root">
+      <div className="flex flex-1 min-h-0 overflow-hidden mt-2 border border-[var(--border-color)] rounded-md">
         {!previewMode && (
-          <Editor
-            height="100%"
-            theme={monacoTheme}
-            language="xml"
-            value={svgCode}
-            onChange={(val) => setSvgCode(val ?? "")}
-            options={{
-              minimap: { enabled: true },
-              fontSize: 14,
-              lineNumbers: "on",
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              tabSize: 2,
-              wordWrap: "on",
-              smoothScrolling: true,
-            }}
-          />
+          <div className="flex-1 min-h-[200px] overflow-hidden">
+            <CodeMirror
+              value={svgCode}
+              height="100%"
+              minHeight="200px"
+              theme={editorTheme}
+              extensions={[xml()]}
+              onChange={(val) => setSvgCode(val ?? "")}
+              basicSetup={{ lineNumbers: true, foldGutter: true }}
+            />
+          </div>
         )}
         <div
           ref={previewRef}
           className={`p-4 w-full overflow-auto ${previewMode ? "md:w-full" : "md:w-1/2"}`}
-        ></div>
+        />
       </div>
     </div>
   );

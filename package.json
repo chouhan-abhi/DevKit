@@ -26,7 +26,7 @@
     "task-manager",
     "react",
     "vite",
-    "monaco-editor",
+    "codemirror",
     "pwa",
     "progressive-web-app"
   ],
@@ -39,18 +39,22 @@
     "deploy": "bun run build && cd ./dist && surge"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.7.0",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-markdown": "^6.3.1",
+    "@codemirror/lang-xml": "^6.0.2",
     "@tailwindcss/vite": "^4.1.12",
     "@tanstack/query-sync-storage-persister": "^5.85.5",
     "@tanstack/react-query": "^5.85.5",
     "@tanstack/react-query-persist-client": "^5.85.5",
+    "@uiw/react-codemirror": "^4.25.4",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "diff-match-patch": "^1.0.5",
     "lucide-react": "^0.542.0",
     "mermaid": "^11.12.1",
-    "monaco-editor": "^0.55.1",
     "react": "^19.1.1",
+    "react-codemirror-merge": "^4.25.4",
     "react-dom": "^19.1.1",
     "react-json-view-lite": "^2.5.0",
     "react-markdown": "^10.1.0",
@@ -59,7 +63,6 @@
     "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
-    "@bithero/monaco-editor-vite-plugin": "^1.0.3",
     "@eslint/js": "^9.33.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",

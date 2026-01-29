@@ -23,7 +23,7 @@ export const themeManager = {
 
     root.setAttribute("data-theme", finalTheme);
 
-    // Trigger Monaco theme update event
+    // Notify editors (e.g. CodeMirror) to update theme
     window.dispatchEvent(new CustomEvent("theme-changed", { detail: finalTheme }));
   },
 

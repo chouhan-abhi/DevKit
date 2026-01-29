@@ -137,7 +137,7 @@ export default function CodeRunner({ code = "" }) {
   return (
     <div className="flex flex-col h-full w-full bg-[var(--panel-color)] overflow-hidden rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between mt-2 px-4 py-2 bg-[var(--bg-color)]/80">
+      <div className="flex items-center justify-between mt-2 px-4 bg-[var(--bg-color)]/80">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Terminal className="w-4 h-4 text-[var(--primary-color)]" />
           Console
@@ -145,7 +145,7 @@ export default function CodeRunner({ code = "" }) {
 
         <div className="flex items-center gap-2">
           {execTime && (
-            <span className="text-xs px-2 py-0.5 rounded-md border">
+            <span className="flex items-center gap-1 px-4 py-1 text-sm rounded-full border border-[var(--border-color)]">
               {execTime} ms
             </span>
           )}

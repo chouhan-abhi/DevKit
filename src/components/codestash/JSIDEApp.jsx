@@ -25,7 +25,7 @@ console.log("Hello JavaScript!");`;
   return (
     <div
       className="
-        h-[calc(100vh-60px)] w-[calc(96vw-60px)]
+        h-full w-full p-2
         flex flex-col md:flex-row text-[var(--text-color)] overflow-hidden
       "
     >

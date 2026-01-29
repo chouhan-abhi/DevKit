@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, lazy } from "react";
-const  Editor = lazy(() => import("@monaco-editor/react"));
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { markdown } from "@codemirror/lang-markdown";
 import { 
   Save, 
   FileText, 
@@ -58,25 +59,21 @@ const MermaidEditor = () => {
   const mermaidContainerRef = useRef(null);
   const hasRestoredFile = useRef(false);
 
-  // Get initial theme and convert to Monaco theme format
-  const getMonacoTheme = (theme) => {
-    const resolvedTheme = theme === "system" 
+  const getEditorTheme = (theme) => {
+    const resolvedTheme = theme === "system"
       ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
       : theme;
-    return resolvedTheme === "dark" ? "vs-dark" : "vs-light";
+    return resolvedTheme === "dark" ? "dark" : "light";
   };
-  
-  const [monacoTheme, setMonacoTheme] = useState(() => {
-    const currentTheme = themeManager.getTheme();
-    return getMonacoTheme(currentTheme);
-  });
+
+  const [editorTheme, setEditorTheme] = useState(() =>
+    getEditorTheme(themeManager.getTheme())
+  );
 
   useEffect(() => {
     const handler = (e) => {
-      const theme = e.detail === "dark" ? "vs-dark" : "vs-light";
-      setMonacoTheme(theme);
+      setEditorTheme(e.detail === "dark" ? "dark" : "light");
     };
-
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
@@ -500,13 +497,12 @@ const MermaidEditor = () => {
 
   return (
     <div
-      className="h-full w-[96%] flex flex-col"
+      className="h-full w-full rounded-md p-2 flex flex-col"
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center gap-3 mt-2 px-4 py-3 border-b relative"
-        style={{ background: "var(--panel-color)", borderColor: "var(--border-color)" }}
+        className="flex items-center gap-2 py-2"
       >
         {/* File Name Title */}
         {currentFileId && (
@@ -814,26 +810,18 @@ const MermaidEditor = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 border border-[var(--border-color)] rounded-md overflow-hidden">
         {/* Editor */}
         {!previewMode && (
-          <div className="flex-1 flex flex-col monaco-root min-h-[300px] md:min-h-0">
-            <Editor
-              height="100%"
-              theme={monacoTheme}
-              language="mermaid"
+          <div className="flex-1 rounded-md min-h-[300px] md:min-h-0 overflow-hidden">
+            <CodeMirror
               value={mermaidCode}
+              height="100%"
+              minHeight="300px"
+              theme={editorTheme}
+              extensions={[markdown()]}
               onChange={(value) => setMermaidCode(value ?? "")}
-              options={{
-                minimap: { enabled: true },
-                fontSize: 14,
-                lineNumbers: "on",
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-                tabSize: 2,
-                wordWrap: "on",
-                smoothScrolling: true,
-              }}
+              basicSetup={{ lineNumbers: true, foldGutter: true }}
             />
           </div>
         )}
