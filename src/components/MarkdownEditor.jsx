@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown as markdownLanguage } from "@codemirror/lang-markdown";
+import ReactMarkdown from "react-markdown";
 import {
   Eye,
   Edit,
@@ -10,50 +11,6 @@ import {
 } from "lucide-react";
 import { storage } from "../utils/StorageManager";
 import { themeManager } from "../utils/themeManger";
-
-/* -------------------------------------------------- */
-/* Markdown → HTML (unchanged, safe) */
-/* -------------------------------------------------- */
-
-const markdownToHtml = (markdown) => {
-  if (!markdown) return "";
-
-  let html = markdown;
-  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-  const styles = [];
-  let match;
-
-  while ((match = styleRegex.exec(markdown)) !== null) {
-    styles.push(match[1]);
-  }
-
-  html = html.replace(styleRegex, "");
-
-  html = html
-    .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-    .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-    .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-    .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/gim, "<em>$1</em>")
-    .replace(/```([\s\S]*?)```/gim, "<pre><code>$1</code></pre>")
-    .replace(/`(.*?)`/gim, "<code>$1</code>")
-    .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/gim,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    )
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, '<img alt="$1" src="$2" />')
-    .replace(/\n/gim, "<br />");
-
-  if (styles.length) {
-    html = `<style>${styles.join("\n")}</style>` + html;
-  }
-
-  return html;
-};
-
-/* -------------------------------------------------- */
-/* Component */
-/* -------------------------------------------------- */
 
 const MarkdownEditor = () => {
   const initialMarkdown =
@@ -193,11 +150,34 @@ const MarkdownEditor = () => {
           </div>
         )}
         <div
-          className={`overflow-auto rounded-md ${previewMode ? "w-full" : "w-1/2"}`}
-          style={{ background: "var(--panel-color)" }}
+          className={`overflow-auto rounded-md p-6 ${previewMode ? "w-full" : "w-1/2"}`}
+          style={{ background: "var(--panel-color)", color: "var(--text-color)" }}
         >
-          <div className="p-6 prose max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: markdownToHtml(markdown) }} />
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            <ReactMarkdown
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer">
+                    {children}
+                  </a>
+                ),
+                pre: ({ children }) => (
+                  <pre className="overflow-x-auto rounded-lg bg-black/5 dark:bg-white/10 p-4 text-sm my-3">
+                    {children}
+                  </pre>
+                ),
+                code: ({ className, children }) =>
+                  className ? (
+                    <code className={className}>{children}</code>
+                  ) : (
+                    <code className="rounded bg-black/5 dark:bg-white/10 px-1.5 py-0.5 text-sm">
+                      {children}
+                    </code>
+                  ),
+              }}
+            >
+              {markdown ?? ""}
+            </ReactMarkdown>
           </div>
         </div>
       </div>
