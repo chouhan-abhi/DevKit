@@ -1,5 +1,6 @@
-import React, { lazy, useState, useEffect, useRef } from "react";
-import { storage } from "../../utils/StorageManager"; // adjust import path as needed
+import React, { lazy } from "react";
+import SubAppToolbar from "../SubAppToolbar";
+import { useDocuments } from "../../hooks/useDocuments";
 
 const CodeEditor = lazy(() => import("./CodeEditor"));
 const CodeRunner = lazy(() => import("./CodeRunner"));
@@ -8,29 +9,55 @@ const JSIDEApp = () => {
   const defaultCode = `// Welcome to JS Playground ✨
 console.log("Hello JavaScript!");`;
 
-  // 🔹 State to store code
-  const savedCode = storage.get("lastCode", defaultCode);
-  const [code, setCode] = useState( savedCode || defaultCode);
-  const saveTimeout = useRef(null);
+  const {
+    documents,
+    currentId,
+    title,
+    content,
+    setContent,
+    setCurrentDocId,
+    createDoc,
+    saveAs,
+    renameDoc,
+    deleteDoc,
+    isSaving,
+  } = useDocuments({
+    appId: "js-ide",
+    defaultTitle: "Untitled JS",
+    initialContent: { code: defaultCode },
+    meta: { language: "javascript" },
+  });
 
-  // 🔹 Persist code whenever it changes (debounced)
-  useEffect(() => {
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => {
-      storage.set("lastCode", code);
-    }, 400);
-    return () => clearTimeout(saveTimeout.current);
-  }, [code]);
+  const code = content?.code ?? defaultCode;
 
   return (
     <div
       className="
-        h-full w-full p-2
-        flex flex-col md:flex-row text-[var(--text-color)] overflow-hidden
+        h-[calc(100vh-60px)] w-[calc(96vw-60px)]
+        flex flex-col text-[var(--text-color)] overflow-hidden
       "
     >
-      <CodeEditor initialCode={code} onCodeChange={setCode} />
-      <CodeRunner code={code} />
+      <div className="p-3">
+        <SubAppToolbar
+          documents={documents}
+          currentId={currentId}
+          currentTitle={title}
+          onSelect={setCurrentDocId}
+          onRename={renameDoc}
+          onNew={() => createDoc("Untitled JS", { code: defaultCode })}
+          onSaveAs={(name) => saveAs(name)}
+          onDelete={() => deleteDoc()}
+          status={isSaving ? "saving" : "saved"}
+        />
+      </div>
+
+      <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
+        <CodeEditor
+          initialCode={code}
+          onCodeChange={(next) => setContent({ code: next })}
+        />
+        <CodeRunner code={code} />
+      </div>
     </div>
   );
 };

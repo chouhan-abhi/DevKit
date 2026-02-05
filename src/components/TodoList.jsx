@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { storage } from "../utils/StorageManager";
+import { useMemo, useState } from "react";
 import { Calendar, Plus, Tag, Trash } from "lucide-react";
-import { themeManager } from "../utils/themeManger";
+import SubAppToolbar from "./SubAppToolbar";
+import { useDocuments } from "../hooks/useDocuments";
 
 const categoryColors = {
   General: "var(--primary-color)",
@@ -13,17 +13,26 @@ const categoryColors = {
 export default function TodoList() {
   const [taskText, setTaskText] = useState("");
   const [category, setCategory] = useState("General");
-  const [tasks, setTasks] = useState([]);
 
-  // Load tasks
-  useEffect(() => {
-    setTasks(storage.get("tasks", []));
-  }, []);
+  const {
+    documents,
+    currentId,
+    title,
+    content,
+    setContent,
+    setCurrentDocId,
+    createDoc,
+    saveAs,
+    renameDoc,
+    deleteDoc,
+    isSaving,
+  } = useDocuments({
+    appId: "tasks",
+    defaultTitle: "Task List",
+    initialContent: { tasks: [] },
+  });
 
-  // Save tasks
-  useEffect(() => {
-    storage.set("tasks", tasks);
-  }, [tasks]);
+  const tasks = content?.tasks || [];
 
   const addTask = () => {
     if (!taskText.trim()) return;
@@ -36,43 +45,59 @@ export default function TodoList() {
       done: false
     };
 
-    setTasks([newTask, ...tasks]);
+    setContent((prev) => ({
+      ...(prev || {}),
+      tasks: [newTask, ...(prev?.tasks || [])],
+    }));
     setTaskText("");
   };
 
   const toggleTask = (id) => {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    setContent((prev) => ({
+      ...(prev || {}),
+      tasks: (prev?.tasks || []).map((t) =>
+        t.id === id ? { ...t, done: !t.done } : t
+      ),
+    }));
   };
 
   const deleteTask = (id) => {
-    setTasks(tasks.filter((t) => t.id !== id));
+    setContent((prev) => ({
+      ...(prev || {}),
+      tasks: (prev?.tasks || []).filter((t) => t.id !== id),
+    }));
   };
 
-  const tasksByDate = tasks.reduce((acc, task) => {
-    if (!acc[task.date]) acc[task.date] = [];
-    acc[task.date].push(task);
-    return acc;
-  }, {});
+  const tasksByDate = useMemo(() => {
+    return tasks.reduce((acc, task) => {
+      if (!acc[task.date]) acc[task.date] = [];
+      acc[task.date].push(task);
+      return acc;
+    }, {});
+  }, [tasks]);
 
   const categoryList = ["General", "Work", "Personal", "Urgent"];
 
   return (
-    <div
-      className="max-w-3xl mx-auto w-full"
-      style={{ color: "var(--text)" }}
-    >
-      <h1
-        className="text-3xl font-semibold my-6 flex items-center gap-3"
-        style={{ color: "var(--primary-color)" }}
-      >
-        <Calendar size={28} />
-        Task Manager
-      </h1>
+    <div className="max-w-5xl mx-auto w-full p-4" style={{ color: "var(--text)" }}>
+      <SubAppToolbar
+        title="Task Manager"
+        icon="ListChecks"
+        documents={documents}
+        currentId={currentId}
+        currentTitle={title}
+        onSelect={setCurrentDocId}
+        onRename={renameDoc}
+        onNew={() => createDoc("Task List", { tasks: [] })}
+        onSaveAs={(name) => saveAs(name)}
+        onDelete={() => deleteDoc()}
+        status={isSaving ? "saving" : "saved"}
+      />
 
       {/* INPUT SECTION */}
       <div
         className="
-          p-4 rounded-xl shadow-sm border
+          p-4 mt-6 rounded-xl shadow-sm border
           flex flex-col sm:flex-row gap-3 sm:items-center
         "
         style={{

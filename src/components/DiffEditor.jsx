@@ -1,22 +1,35 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CodeMirrorMerge from "react-codemirror-merge";
 import { javascript } from "@codemirror/lang-javascript";
 import { themeManager } from "../utils/themeManger";
-import { storage } from "../utils/StorageManager";
+import SubAppToolbar from "./SubAppToolbar";
+import { useDocuments } from "../hooks/useDocuments";
+import { ArrowLeftRight } from "lucide-react";
 
 const Original = CodeMirrorMerge.Original;
 const Modified = CodeMirrorMerge.Modified;
 
-const LEFT_KEY = "diff-editor-left";
-const RIGHT_KEY = "diff-editor-right";
-
 export default function DualEditableDiff() {
-  const [leftCode, setLeftCode] = useState(() =>
-    storage.get(LEFT_KEY, "// Left editor")
-  );
-  const [rightCode, setRightCode] = useState(() =>
-    storage.get(RIGHT_KEY, "// Right editor")
-  );
+  const {
+    documents,
+    currentId,
+    title,
+    content,
+    setContent,
+    setCurrentDocId,
+    createDoc,
+    saveAs,
+    renameDoc,
+    deleteDoc,
+    isSaving,
+  } = useDocuments({
+    appId: "diff-editor",
+    defaultTitle: "Diff Document",
+    initialContent: { left: "// Left editor", right: "// Right editor" },
+  });
+
+  const leftCode = content?.left ?? "";
+  const rightCode = content?.right ?? "";
 
   const getTheme = (theme) => {
     const resolved =
@@ -40,14 +53,6 @@ export default function DualEditableDiff() {
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
-  useEffect(() => {
-    storage.set(LEFT_KEY, leftCode);
-  }, [leftCode]);
-
-  useEffect(() => {
-    storage.set(RIGHT_KEY, rightCode);
-  }, [rightCode]);
-
   const extensions = useMemo(() => [javascript({ jsx: true })], []);
 
   return (
@@ -55,6 +60,38 @@ export default function DualEditableDiff() {
       className="flex flex-col h-full min-h-0 gap-2 p-2 bg-[var(--bg-color)]"
       style={{ minHeight: "300px" }}
     >
+      <SubAppToolbar
+        documents={documents}
+        currentId={currentId}
+        currentTitle={title}
+        onSelect={setCurrentDocId}
+        onRename={renameDoc}
+        onNew={() =>
+          createDoc("Diff Document", {
+            left: "// Left editor",
+            right: "// Right editor",
+          })
+        }
+        onSaveAs={(name) => saveAs(name)}
+        onDelete={() => deleteDoc()}
+        status={isSaving ? "saving" : "saved"}
+        rightActions={
+          <button
+            type="button"
+            className="toolbar-btn"
+            onClick={() =>
+              setContent((prev) => ({
+                left: prev?.right || "",
+                right: prev?.left || "",
+              }))
+            }
+          >
+            <ArrowLeftRight size={16} />
+            Swap
+          </button>
+        }
+      />
+
       <CodeMirrorMerge
         theme={editorTheme}
         orientation="a-b"
@@ -64,12 +101,16 @@ export default function DualEditableDiff() {
         <Original
           value={leftCode}
           extensions={extensions}
-          onChange={(value) => setLeftCode(value ?? "")}
+          onChange={(value) =>
+            setContent((prev) => ({ ...(prev || {}), left: value ?? "" }))
+          }
         />
         <Modified
           value={rightCode}
           extensions={extensions}
-          onChange={(value) => setRightCode(value ?? "")}
+          onChange={(value) =>
+            setContent((prev) => ({ ...(prev || {}), right: value ?? "" }))
+          }
         />
       </CodeMirrorMerge>
     </div>

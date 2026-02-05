@@ -21,6 +21,7 @@ import {
   Shield,
 } from "lucide-react";
 import { DEFAULT_QUERY_OPTIONS } from "../utils/Constants";
+import { storage } from "../utils/StorageManager";
 
 const POPULAR_LANGUAGES = [
   "All Languages",
@@ -141,9 +142,14 @@ const getTimeAgo = (dateString) => {
 };
 
 export default function GitHubTrending() {
-  const [selectedLanguage, setSelectedLanguage] = useState("All Languages");
-  const [selectedDateRange, setSelectedDateRange] = useState(7);
-  const [searchQuery, setSearchQuery] = useState("");
+  const savedFilters = storage.get("github-trending:filters", null);
+  const [selectedLanguage, setSelectedLanguage] = useState(
+    savedFilters?.language || "All Languages"
+  );
+  const [selectedDateRange, setSelectedDateRange] = useState(
+    savedFilters?.dateRange ?? 7
+  );
+  const [searchQuery, setSearchQuery] = useState(savedFilters?.searchQuery || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const debounceTimerRef = useRef(null);
 
@@ -163,6 +169,14 @@ export default function GitHubTrending() {
       }
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    storage.set("github-trending:filters", {
+      language: selectedLanguage,
+      dateRange: selectedDateRange,
+      searchQuery,
+    });
+  }, [selectedLanguage, selectedDateRange, searchQuery]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["github-trending", selectedLanguage, selectedDateRange, debouncedSearchQuery],
@@ -761,4 +775,3 @@ export default function GitHubTrending() {
     </div>
   );
 }
-

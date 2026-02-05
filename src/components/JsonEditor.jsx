@@ -1,24 +1,40 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { JsonView, darkStyles, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import { AlertCircle, CheckCircle, Code, Minimize2 } from "lucide-react";
+import CodeMirror from "@uiw/react-codemirror";
+import { json } from "@codemirror/lang-json";
 import { themeManager } from "../utils/themeManger";
-import { storage } from "../utils/StorageManager";
-
-const STORAGE_KEY = "json-editor-content";
-const fallbackJson = "{\n  \"name\": \"User\",\n  \"age\": 24\n}";
+import SubAppToolbar from "./SubAppToolbar";
+import { useDocuments } from "../hooks/useDocuments";
 
 const JsonEditor = () => {
   const parseTimerRef = useRef(null);
 
-  const savedJson = storage.get(STORAGE_KEY, fallbackJson);
+  const fallbackJson = "{\n  \"name\": \"User\",\n  \"age\": 24\n}";
 
-  const [jsonText, setJsonText] = useState(savedJson);
+  const {
+    documents,
+    currentId,
+    title,
+    content,
+    setContent,
+    setCurrentDocId,
+    createDoc,
+    saveAs,
+    renameDoc,
+    deleteDoc,
+    isSaving,
+  } = useDocuments({
+    appId: "json",
+    defaultTitle: "JSON Document",
+    initialContent: { jsonText: fallbackJson },
+  });
+
+  const jsonText = content?.jsonText ?? fallbackJson;
   const [jsonObj, setJsonObj] = useState(() => {
     try {
-      return JSON.parse(savedJson);
+      return JSON.parse(jsonText);
     } catch {
       return null;
     }
@@ -36,7 +52,6 @@ const JsonEditor = () => {
     getThemeMode(themeManager.getTheme())
   );
 
-  const editorTheme = themeMode === "dark" ? "dark" : "light";
   const jsonViewStyle = themeMode === "dark" ? darkStyles : defaultStyles;
 
   useEffect(() => {
@@ -48,11 +63,8 @@ const JsonEditor = () => {
   }, []);
 
   useEffect(() => {
-    storage.set(STORAGE_KEY, jsonText);
-  }, [jsonText]);
-
-  useEffect(() => {
     clearTimeout(parseTimerRef.current);
+
     parseTimerRef.current = setTimeout(() => {
       try {
         const parsed = JSON.parse(jsonText);
@@ -63,17 +75,21 @@ const JsonEditor = () => {
         setError(err.message);
       }
     }, 300);
+
     return () => clearTimeout(parseTimerRef.current);
   }, [jsonText]);
 
   const handleEditorChange = (value) => {
-    setJsonText(value ?? "");
+    setContent((prev) => ({ ...(prev || {}), jsonText: value ?? "" }));
   };
 
   const formatJson = () => {
     try {
       const parsed = JSON.parse(jsonText);
-      setJsonText(JSON.stringify(parsed, null, 2));
+      setContent((prev) => ({
+        ...(prev || {}),
+        jsonText: JSON.stringify(parsed, null, 2),
+      }));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -83,7 +99,10 @@ const JsonEditor = () => {
   const minifyJson = () => {
     try {
       const parsed = JSON.parse(jsonText);
-      setJsonText(JSON.stringify(parsed));
+      setContent((prev) => ({
+        ...(prev || {}),
+        jsonText: JSON.stringify(parsed),
+      }));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -94,74 +113,77 @@ const JsonEditor = () => {
 
   return (
     <div
-      className="h-full w-full p-2 flex flex-col"
-      style={{ background: "var(--bg-color)", color: "var(--text-color)" }}
+      className="h-full w-full flex flex-col"
+      style={{ background: "var(--bg)", color: "var(--text)" }}
     >
-      <div className="flex flex-col md:flex-row flex-1 min-h-0 rounded-lg overflow-hidden shadow-sm border" style={{ borderColor: "var(--border-color)" }}>
+      <div className="p-3">
+        <SubAppToolbar
+          documents={documents}
+          currentId={currentId}
+          currentTitle={title}
+          onSelect={setCurrentDocId}
+          onRename={renameDoc}
+          onNew={() => createDoc("JSON Document", { jsonText: fallbackJson })}
+          onSaveAs={(name) => saveAs(name)}
+          onDelete={() => deleteDoc()}
+          status={isSaving ? "saving" : "saved"}
+          rightActions={
+            <>
+              <button onClick={formatJson} className="toolbar-btn" type="button">
+                <Code size={16} /> Format
+              </button>
+
+              <button onClick={minifyJson} className="toolbar-btn" type="button">
+                <Minimize2 size={16} /> Minify
+              </button>
+            </>
+          }
+        />
+      </div>
+
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 rounded-lg overflow-hidden shadow-sm">
         <div
-          className="flex-1 flex flex-col min-h-0 border-r-0 md:border-r border-b md:border-b-0"
+          className="flex-1 flex flex-col border-r-0 md:border-r border-b md:border-b-0"
           style={{ borderColor: "var(--border-color)" }}
         >
-          <div
-            className="flex items-center gap-3 px-4 py-3 border-b shrink-0"
-            style={{ borderColor: "var(--border-color)" }}
-          >
-            <button
-              onClick={formatJson}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2"
-              style={{ background: "var(--sidebar-icon-bg)", color: "var(--sidebar-icon-text)" }}
-              type="button"
-            >
-              <Code size={16} /> Format
-            </button>
-            <button
-              onClick={minifyJson}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2"
-              style={{ background: "var(--sidebar-icon-bg)", color: "var(--sidebar-icon-text)" }}
-              type="button"
-            >
-              <Minimize2 size={16} /> Minify
-            </button>
-            <div className="ml-auto">
-              {error ? (
-                <span className="flex items-center gap-1 text-red-600 text-sm">
-                  <AlertCircle size={16} /> Invalid JSON
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-sm" style={{ color: "var(--primary-color)" }}>
-                  <CheckCircle size={16} /> Valid JSON
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-[200px] overflow-hidden">
-            <CodeMirror
-              value={jsonText}
-              height="100%"
-              minHeight="200px"
-              theme={editorTheme}
-              extensions={extensions}
-              onChange={handleEditorChange}
-              basicSetup={{ lineNumbers: true, foldGutter: true }}
-            />
-          </div>
+          <CodeMirror
+            value={jsonText}
+            height="100%"
+            minHeight="280px"
+            theme={themeMode}
+            extensions={extensions}
+            onChange={handleEditorChange}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: true,
+              highlightActiveLineGutter: true,
+              highlightActiveLine: true,
+              bracketMatching: true,
+              closeBrackets: true,
+              autocompletion: true,
+              indentOnInput: true,
+            }}
+          />
         </div>
 
         <div
           className="w-full md:w-[40%] overflow-auto p-6"
           style={{ background: "var(--panel-color)" }}
         >
-          <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--primary-color)" }}>
+          <h2
+            className="text-lg font-semibold mb-4"
+            style={{ color: "var(--primary-color)" }}
+          >
             JSON Structure
           </h2>
+
           {error ? (
             <p className="text-red-600 text-sm">{error}</p>
           ) : (
             <div
               style={{
                 borderRadius: "8px",
-                background: "var(--bg-color)",
+                background: "var(--bg)",
                 padding: "10px",
               }}
             >
@@ -169,6 +191,21 @@ const JsonEditor = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="px-4 py-2">
+        {error ? (
+          <span className="flex items-center gap-1 text-red-600 text-sm">
+            <AlertCircle size={16} /> Invalid JSON
+          </span>
+        ) : (
+          <span
+            className="flex items-center gap-1 text-sm"
+            style={{ color: "var(--primary-color)" }}
+          >
+            <CheckCircle size={16} /> Valid JSON
+          </span>
+        )}
       </div>
     </div>
   );
