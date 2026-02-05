@@ -3,6 +3,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { markdown as markdownLanguage } from "@codemirror/lang-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import LZString from "lz-string";
 import {
   Eye,
   Edit,
@@ -138,13 +139,31 @@ const MarkdownEditor = () => {
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
-  /* Read markdown from URL hash on mount (e.g. #md=...) */
+  /* Read markdown from URL hash on mount
+   * Supports both legacy #md=... (URL-encoded) and new #mdz=... (LZ-String compressed)
+   */
   useEffect(() => {
     const hash = window.location.hash;
-    const match = /#md=(.+)$/.exec(hash);
-    if (match?.[1]) {
+    
+    // Try compressed format first (#mdz=...)
+    const compressedMatch = /#mdz=(.+)$/.exec(hash);
+    if (compressedMatch?.[1]) {
       try {
-        setMarkdown(decodeURIComponent(match[1]));
+        const decompressed = LZString.decompressFromEncodedURIComponent(compressedMatch[1]);
+        if (decompressed) {
+          setMarkdown(decompressed);
+          return;
+        }
+      } catch {
+        // fall through to legacy format
+      }
+    }
+    
+    // Legacy uncompressed format (#md=...)
+    const legacyMatch = /#md=(.+)$/.exec(hash);
+    if (legacyMatch?.[1]) {
+      try {
+        setMarkdown(decodeURIComponent(legacyMatch[1]));
       } catch {
         // ignore invalid encoded content
       }
@@ -232,12 +251,19 @@ const MarkdownEditor = () => {
     URL.revokeObjectURL(url);
   };
 
-  const URL_MD_MAX_LENGTH = 1500;
+  // Max raw markdown length for URL export (compressed URLs are ~50-70% smaller)
+  // 32KB raw typically compresses to ~12-15KB in URL, which works in most browsers
+  const URL_MD_MAX_LENGTH = 32000;
 
   const handleExportToUrl = async () => {
-    if ((markdown ?? "").length > URL_MD_MAX_LENGTH) return;
-    const hash = `#md=${encodeURIComponent(markdown ?? "")}`;
+    const content = markdown ?? "";
+    if (content.length > URL_MD_MAX_LENGTH) return;
+    
+    // Use LZ-String compression for URL-safe encoding
+    const compressed = LZString.compressToEncodedURIComponent(content);
+    const hash = `#mdz=${compressed}`;
     const fullUrl = window.location.origin + window.location.pathname + hash;
+    
     try {
       await navigator.clipboard.writeText(fullUrl);
       setUrlCopied(true);
@@ -430,10 +456,10 @@ const MarkdownEditor = () => {
           className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: "var(--sidebar-icon-bg)", color: "var(--sidebar-icon-text)" }}
           type="button"
-          title={canExportToUrl ? "Copy URL with content (short docs only)" : "Document too long for URL"}
+          title={canExportToUrl ? "Copy shareable URL (compressed)" : "Document too long for URL sharing"}
         >
           {urlCopied ? <Check size={16} /> : <Link size={16} />}
-          {urlCopied ? "URL copied" : "Export to URL"}
+          {urlCopied ? "URL copied" : "Share URL"}
         </button>
         <button
           onClick={() => setPreviewMode(!previewMode)}
