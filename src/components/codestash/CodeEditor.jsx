@@ -47,16 +47,16 @@ const CodeEditor = ({
   return (
     <div className="flex flex-col w-full h-full min-h-0">
       <div
-        className="flex-1 w-full min-h-[200px] rounded-xl border overflow-hidden"
+        className="flex-1 w-full min-h-0 rounded-xl border overflow-hidden"
         style={{ borderColor: "var(--border-color)" }}
       >
         <CodeMirror
           value={code}
           height="100%"
-          minHeight="200px"
           theme={editorTheme}
           extensions={extensions}
           onChange={handleChange}
+          className="h-full"
           basicSetup={{
             lineNumbers: true,
             foldGutter: true,

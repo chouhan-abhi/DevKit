@@ -161,7 +161,7 @@ const SvgEditor = () => {
   const extensions = useMemo(() => [xml()], []);
 
   return (
-    <div className="h-full flex flex-col w-[96%]">
+    <div className="h-full w-full flex flex-col min-h-0">
       <div className="p-3">
         <SubAppToolbar
           documents={documents}
@@ -260,12 +260,12 @@ const SvgEditor = () => {
           <CodeMirror
             value={svgCode}
             height="100%"
-            minHeight="280px"
             theme={editorTheme}
             extensions={extensions}
             onChange={(val) =>
               setContent((prev) => ({ ...(prev || {}), svg: val ?? "" }))
             }
+            className="h-full"
             basicSetup={{
               lineNumbers: true,
               foldGutter: true,

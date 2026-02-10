@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Download, Upload, Eye, Edit, Copy, Check, Sparkles } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
+import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 import { markdown } from "@codemirror/lang-markdown";
 import { themeManager } from "../utils/themeManger";
 import SubAppToolbar from "./SubAppToolbar";
@@ -330,11 +331,36 @@ const MermaidEditor = () => {
     }
   };
 
-  const extensions = useMemo(() => [markdown()], []);
+  const mermaidCompletions = useMemo(
+    () =>
+      completeFromList([
+        { label: "graph TD", type: "keyword", apply: "graph TD\n" },
+        { label: "graph LR", type: "keyword", apply: "graph LR\n" },
+        { label: "flowchart TD", type: "keyword", apply: "flowchart TD\n" },
+        { label: "sequenceDiagram", type: "keyword", apply: "sequenceDiagram\n" },
+        { label: "classDiagram", type: "keyword", apply: "classDiagram\n" },
+        { label: "stateDiagram-v2", type: "keyword", apply: "stateDiagram-v2\n" },
+        { label: "erDiagram", type: "keyword", apply: "erDiagram\n" },
+        { label: "gantt", type: "keyword", apply: "gantt\n" },
+        { label: "pie", type: "keyword", apply: "pie\n" },
+        { label: "journey", type: "keyword", apply: "journey\n" },
+        { label: "mindmap", type: "keyword", apply: "mindmap\n" },
+        { label: "timeline", type: "keyword", apply: "timeline\n" },
+        { label: "gitGraph", type: "keyword", apply: "gitGraph\n" },
+        { label: "subgraph", type: "keyword", apply: "subgraph " },
+        { label: "end", type: "keyword", apply: "end\n" },
+      ]),
+    []
+  );
+
+  const extensions = useMemo(
+    () => [markdown(), autocompletion({ override: [mermaidCompletions] })],
+    [mermaidCompletions]
+  );
 
   return (
     <div
-      className="h-full w-[96%] flex flex-col"
+      className="h-full w-full flex flex-col min-h-0"
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
       <div className="p-3">
@@ -432,16 +458,16 @@ const MermaidEditor = () => {
 
       <div className="flex flex-col md:flex-row flex-1 min-h-0 border border-[var(--border-color)] rounded-md overflow-hidden">
         {!previewMode && (
-          <div className="flex-1 rounded-md min-h-[300px] md:min-h-0 overflow-hidden">
+          <div className="flex-1 rounded-md min-h-0 overflow-hidden">
             <CodeMirror
               value={mermaidCode}
               height="100%"
-              minHeight="280px"
               theme={editorTheme}
               extensions={extensions}
               onChange={(value) =>
                 setContent((prev) => ({ ...(prev || {}), mermaid: value ?? "" }))
               }
+              className="h-full"
               basicSetup={{
                 lineNumbers: true,
                 foldGutter: true,
@@ -458,7 +484,7 @@ const MermaidEditor = () => {
 
         <div
           className={
-            previewMode ? "w-full" : "w-full md:w-[50%] min-h-[300px] md:min-h-0"
+            previewMode ? "w-full" : "w-full md:w-[50%] min-h-0"
           }
           style={{
             background: "var(--panel-color)",

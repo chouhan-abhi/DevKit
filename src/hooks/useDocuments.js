@@ -18,6 +18,43 @@ export const useDocuments = ({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
 
+  const normalizeContent = (docContent) => {
+    if (docContent == null) return initialContent;
+
+    const initialIsArray = Array.isArray(initialContent);
+    const contentIsArray = Array.isArray(docContent);
+
+    if (typeof docContent === "string") {
+      if (
+        initialContent &&
+        typeof initialContent === "object" &&
+        !initialIsArray
+      ) {
+        const keys = Object.keys(initialContent);
+        if (
+          keys.length === 1 &&
+          typeof initialContent[keys[0]] === "string"
+        ) {
+          return { [keys[0]]: docContent };
+        }
+      }
+      return initialContent;
+    }
+
+    if (contentIsArray) {
+      return initialIsArray ? docContent : initialContent;
+    }
+
+    if (docContent && typeof docContent === "object") {
+      if (initialContent && typeof initialContent === "object" && !initialIsArray) {
+        return { ...initialContent, ...docContent };
+      }
+      return docContent;
+    }
+
+    return initialContent;
+  };
+
   const refreshDocs = () => {
     const docs = documentStore.listDocs(appId);
     setDocuments(docs);
@@ -48,7 +85,7 @@ export const useDocuments = ({
       documentStore.setCurrentId(appId, nextId);
       setCurrentId(nextId);
       const doc = documentStore.getDoc(nextId);
-      setContent(doc?.content ?? initialContent);
+      setContent(normalizeContent(doc?.content));
       setTitle(doc?.title || defaultTitle);
       setLastSavedAt(doc?.updatedAt || null);
     }
@@ -58,7 +95,7 @@ export const useDocuments = ({
     if (!currentId) return;
     const doc = documentStore.getDoc(currentId);
     if (!doc) return;
-    setContent(doc.content ?? initialContent);
+    setContent(normalizeContent(doc?.content));
     setTitle(doc.title || defaultTitle);
     setLastSavedAt(doc.updatedAt || null);
   }, [currentId]);
@@ -156,4 +193,3 @@ export const useDocuments = ({
     lastSavedAt,
   };
 };
-

@@ -31,12 +31,7 @@ console.log("Hello JavaScript!");`;
   const code = content?.code ?? defaultCode;
 
   return (
-    <div
-      className="
-        h-[calc(100vh-60px)] w-[calc(96vw-60px)]
-        flex flex-col text-[var(--text-color)] overflow-hidden
-      "
-    >
+    <div className="h-full w-full min-h-0 flex flex-col text-[var(--text-color)] overflow-hidden">
       <div className="p-3">
         <SubAppToolbar
           documents={documents}
@@ -51,7 +46,7 @@ console.log("Hello JavaScript!");`;
         />
       </div>
 
-      <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
+      <div className="flex flex-1 min-h-0 flex-col md:flex-row overflow-hidden">
         <CodeEditor
           initialCode={code}
           onCodeChange={(next) => setContent({ code: next })}

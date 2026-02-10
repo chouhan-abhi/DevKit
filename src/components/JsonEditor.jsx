@@ -113,7 +113,7 @@ const JsonEditor = () => {
 
   return (
     <div
-      className="h-full w-full flex flex-col"
+      className="h-full w-full flex flex-col min-h-0"
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
       <div className="p-3">
@@ -143,16 +143,16 @@ const JsonEditor = () => {
 
       <div className="flex flex-col md:flex-row flex-1 min-h-0 rounded-lg overflow-hidden shadow-sm">
         <div
-          className="flex-1 flex flex-col border-r-0 md:border-r border-b md:border-b-0"
+          className="flex-1 flex flex-col min-h-0 border-r-0 md:border-r border-b md:border-b-0"
           style={{ borderColor: "var(--border-color)" }}
         >
           <CodeMirror
             value={jsonText}
             height="100%"
-            minHeight="280px"
             theme={themeMode}
             extensions={extensions}
             onChange={handleEditorChange}
+            className="h-full"
             basicSetup={{
               lineNumbers: true,
               foldGutter: true,

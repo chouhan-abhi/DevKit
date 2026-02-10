@@ -56,10 +56,7 @@ export default function DualEditableDiff() {
   const extensions = useMemo(() => [javascript({ jsx: true })], []);
 
   return (
-    <div
-      className="flex flex-col h-full min-h-0 gap-2 p-2 bg-[var(--bg-color)]"
-      style={{ minHeight: "300px" }}
-    >
+    <div className="flex flex-col h-full min-h-0 gap-2 p-2 bg-[var(--bg-color)]">
       <SubAppToolbar
         documents={documents}
         currentId={currentId}
@@ -95,7 +92,7 @@ export default function DualEditableDiff() {
       <CodeMirrorMerge
         theme={editorTheme}
         orientation="a-b"
-        className="flex-1 min-h-[280px] overflow-auto border rounded-lg"
+        className="flex-1 min-h-0 overflow-hidden border rounded-lg"
         style={{ borderColor: "var(--border-color)" }}
       >
         <Original

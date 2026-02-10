@@ -186,7 +186,7 @@ const MarkdownEditor = () => {
   const extensions = useMemo(() => [markdownLang()], []);
 
   return (
-    <div className="h-full w-full flex flex-col">
+    <div className="h-full w-full flex flex-col min-h-0">
       <div className="p-3">
         <SubAppToolbar
           documents={documents}
@@ -240,13 +240,12 @@ const MarkdownEditor = () => {
         />
       </div>
 
-      <div className="flex flex-1 min-h-[70vh] overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {!previewMode && (
-          <div className="flex-1 min-h-[70vh] overflow-auto border-r border-[var(--border-color)]">
+          <div className="flex-1 min-h-0 overflow-auto border-r border-[var(--border-color)]">
             <CodeMirror
               value={markdownText}
               height="100%"
-              minHeight="70vh"
               theme={editorTheme}
               extensions={extensions}
               onChange={(value) =>
