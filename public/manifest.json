@@ -12,21 +12,21 @@
   "lang": "en",
   "icons": [
     {
-      "src": "/DevKit.svg",
+      "src": "/DevKit.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/DevKit.svg",
+      "src": "/DevKit.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png+xml",
       "purpose": "any"
     },
     {
-      "src": "/DevKit.svg",
+      "src": "/DevKit.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png+xml",
       "purpose": "any"
     }
   ],
@@ -38,49 +38,49 @@
       "short_name": "JSON",
       "description": "View, format, and edit JSON data",
       "url": "/JSON",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     },
     {
       "name": "Markdown Editor",
       "short_name": "Markdown",
       "description": "Write and preview markdown files",
       "url": "/markdown",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     },
     {
       "name": "Mermaid Draw",
       "short_name": "Mermaid",
       "description": "Create and edit Mermaid diagrams",
       "url": "/mermaid-draw",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     },
     {
       "name": "JavaScript IDE",
       "short_name": "JS IDE",
       "description": "Write and run JavaScript code",
       "url": "/js-ide",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     },
     {
       "name": "Code Diff Viewer",
       "short_name": "Diff",
       "description": "Compare code versions side by side",
       "url": "/diff-editor",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     },
     {
       "name": "Todo Tasks",
       "short_name": "Tasks",
       "description": "Manage your development tasks",
       "url": "/tasks",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     },
     {
       "name": "GitHub Trending",
       "short_name": "Trending",
       "description": "Explore trending repositories on GitHub",
       "url": "/github-trending",
-      "icons": [{ "src": "/DevKit.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/DevKit.png", "sizes": "192x192" }]
     }
   ],
   "share_target": {
