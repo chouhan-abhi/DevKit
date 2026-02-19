@@ -1,0 +1,127 @@
+import { lazy } from "react";
+
+export const tools = [
+  {
+    id: "home",
+    key: "",
+    label: "Devkit Home",
+    description: "Central dashboard for all your Devkit tools and utilities.",
+    icon: "PocketKnife",
+    route: "/",
+    component: lazy(() => import("../modules/home/Home")),
+    showInSidebar: false,
+  },
+  {
+    id: "dashboard",
+    key: "dashboard",
+    label: "Dashboard",
+    description: "Quick access to all tools.",
+    icon: "LayoutDashboard",
+    route: "/dashboard",
+    component: lazy(() => import("../modules/dashboard/Dashboard")),
+    showInSidebar: false,
+  },
+  {
+    id: "tasks",
+    key: "tasks",
+    label: "Tasks",
+    description: "Organize and track your development tasks.",
+    icon: "ListChecks",
+    route: "/tasks",
+    component: lazy(() => import("../modules/tasks/components/TodoList")),
+    category: "productivity",
+  },
+  {
+    id: "js-ide",
+    key: "js-ide",
+    label: "JS Playground",
+    description: "Write and run JavaScript instantly in your browser.",
+    icon: "Code",
+    route: "/js-ide",
+    component: lazy(() => import("../modules/js-ide/components/JSIDEApp")),
+    category: "editor",
+  },
+  {
+    id: "diff-editor",
+    key: "diff-editor",
+    label: "Diff Viewer",
+    description: "Compare code versions side by side with inline highlighting.",
+    icon: "GitCompare",
+    route: "/diff-editor",
+    component: lazy(() => import("../modules/diff-editor/components/DiffEditor")),
+    category: "editor",
+  },
+  {
+    id: "json",
+    key: "json",
+    label: "JSON Explorer",
+    description: "Validate, format, and explore JSON with tree view.",
+    icon: "Braces",
+    route: "/json",
+    component: lazy(() => import("../modules/json-editor/components/JsonEditor")),
+    category: "editor",
+  },
+  {
+    id: "markdown",
+    key: "markdown",
+    label: "Markdown Editor",
+    description: "Write and preview Markdown with live rendering.",
+    icon: "FileText",
+    route: "/markdown",
+    component: lazy(() => import("../modules/markdown/components/MarkdownEditor")),
+    category: "editor",
+  },
+  {
+    id: "mermaid-draw",
+    key: "mermaid-draw",
+    label: "Diagram Editor",
+    description: "Create flowcharts, sequences, and diagrams with Mermaid syntax.",
+    icon: "GitBranch",
+    route: "/mermaid-draw",
+    component: lazy(() => import("../modules/mermaid/components/MermaidEditor")),
+    category: "editor",
+  },
+  {
+    id: "svg-editor",
+    key: "svg-editor",
+    label: "SVG Editor",
+    description: "Design and edit SVG graphics with live preview.",
+    icon: "Image",
+    route: "/svg-editor",
+    component: lazy(() => import("../modules/svg-editor/components/SvgEditor")),
+    category: "editor",
+  },
+  {
+    id: "github-trending",
+    key: "github-trending",
+    label: "GitHub Trending",
+    description: "Discover trending repositories and popular open source projects.",
+    icon: "TrendingUp",
+    route: "/github-trending",
+    component: lazy(() => import("../modules/github-trending/components/GitHubTrending")),
+    category: "explore",
+  },
+  {
+    id: "settings",
+    key: "settings",
+    label: "Settings",
+    description: "Customize your themes, preferences, and development environment.",
+    icon: "Settings",
+    route: "/settings",
+    component: lazy(() => import("../modules/settings/components/Settings")),
+    showInSidebar: true,
+  },
+];
+
+export const getSidebarTools = () => tools.filter((t) => t.key && t.showInSidebar !== false);
+
+export const getToolCards = () => tools.filter((t) => t.key && t.key !== "settings" && t.key !== "dashboard");
+
+export const getToolByKey = (key) => tools.find((t) => t.key === key);
+
+export const DEFAULT_QUERY_OPTIONS = {
+  refetchOnWindowFocus: false,
+  retry: 1,
+  staleTime: 1000 * 60 * 60,
+  gcTime: 1000 * 60 * 60 * 24,
+};

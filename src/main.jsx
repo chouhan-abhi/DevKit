@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./index.css"; // tailwind
-import { DEFAULT_QUERY_OPTIONS } from "./utils/Constants";
+import "./index.css";
+import { DEFAULT_QUERY_OPTIONS } from "./app/registry";
 
 const queryClient = new QueryClient({
   defaultOptions: {
