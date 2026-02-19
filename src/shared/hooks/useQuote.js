@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { DEFAULT_QUERY_OPTIONS } from "../../app/registry";
+import { DEFAULT_QUERY_OPTIONS } from "../../app/queryConfig";
 
 // Use Vite proxy in development to avoid CORS issues
 // For production, use a CORS proxy service

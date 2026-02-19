@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { themeManager } from "../../../shared/services/themeManager";
 import { documentStore } from "../../../shared/services/DocumentStore";
-import { tools } from "../../../app/registry";
+import { getToolById } from "../../../app/registry";
 import {
   Github, ExternalLink, Palette, Sun, Moon, Monitor, Snowflake,
   Database, FileText, HardDrive, BarChart3, Trash2,
@@ -14,8 +14,6 @@ const THEMES = [
   { key: "saint", label: "Nord", icon: Snowflake, desc: "Cool blue tones" },
   { key: "system", label: "System", icon: Monitor, desc: "Match your OS" },
 ];
-
-const toolsByAppId = Object.fromEntries(tools.map((t) => [t.id, t]));
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -37,7 +35,7 @@ export default function Settings() {
   const appBreakdown = useMemo(() => {
     return Object.entries(stats.byApp)
       .map(([appId, count]) => {
-        const tool = toolsByAppId[appId];
+        const tool = getToolById(appId);
         return { appId, count, tool };
       })
       .filter((e) => e.tool)

@@ -1,15 +1,12 @@
 import * as Icons from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
-import { tools } from "../../app/registry";
+import { useCurrentTool } from "../../app/ToolRegistryContext";
 
 export default function AppHeader() {
-	const { pathname } = useLocation();
+	const currentApp = useCurrentTool();
 
-	const currentPath = pathname.replace("/", "");
-	const currentApp = tools.find((a) => a.key === currentPath);
-
-	if (!currentApp || pathname === "/") return null;
+	if (!currentApp || currentApp.key === "") return null;
 
 	const Icon = Icons[currentApp.icon] || null;
 

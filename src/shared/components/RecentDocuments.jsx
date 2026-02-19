@@ -2,9 +2,7 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Lucide from "lucide-react";
 import { documentStore } from "../services/DocumentStore";
-import { tools } from "../../app/registry";
-
-const toolsByAppId = Object.fromEntries(tools.map((t) => [t.id, t]));
+import { getToolById } from "../../app/registry";
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -24,7 +22,7 @@ export default function RecentDocuments({ collapsed = false, limit = 8 }) {
   const recentDocs = useMemo(() => {
     const docs = documentStore.listAllRecentDocs(limit);
     return docs.map((doc) => {
-      const tool = toolsByAppId[doc.appId];
+      const tool = getToolById(doc.appId);
       return { ...doc, tool };
     }).filter((d) => d.tool);
   }, [limit]);
@@ -53,10 +51,10 @@ export default function RecentDocuments({ collapsed = false, limit = 8 }) {
               {Icon && <Icon size={14} />}
             </span>
             <span className="sidebar-recent-meta">
-              <span className="sidebar-recent-title">{doc.title}</span>
-              <span className="sidebar-recent-sub">
+              <div className="sidebar-recent-title">{doc.title}</div>
+              <div className="sidebar-recent-sub">
                 {doc.tool.label} · {timeAgo(doc.updatedAt)}
-              </span>
+              </div>
             </span>
           </button>
         );

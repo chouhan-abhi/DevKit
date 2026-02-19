@@ -4,7 +4,7 @@ import {
   Star, GitFork, Eye, Calendar, Code, ExternalLink, Search,
   TrendingUp, Loader2, AlertCircle, Clock, FileCode, Shield,
 } from "lucide-react";
-import { DEFAULT_QUERY_OPTIONS } from "../../../app/registry";
+import { DEFAULT_QUERY_OPTIONS } from "../../../app/queryConfig";
 import { storage } from "../../../shared/services/StorageManager";
 
 const POPULAR_LANGUAGES = [

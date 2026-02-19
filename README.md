@@ -1,168 +1,253 @@
 # DevKit
 
-A modern, all-in-one developer toolkit built with React and Vite. DevKit provides essential development tools in a single, unified interface with a beautiful, themeable UI.
+A modern, all-in-one developer toolkit built with React 19 and Vite 7. DevKit provides essential development tools in a single, unified interface with a beautiful, themeable UI — entirely in the browser.
 
-## 🚀 Features
+**[Try it live → devkit.dracket.art](https://devkit.dracket.art)**
 
-### 📋 Task Manager
+---
+
+## Features
+
+### Task Manager
 - Create, manage, and organize tasks with categories (General, Work, Personal, Urgent)
-- Date-based task grouping for better organization
-- Persistent storage using local browser storage
-- Mark tasks as complete with visual feedback
-- Color-coded categories for quick identification
+- Date-based grouping and persistent local storage
+- Mark complete with visual feedback and color-coded categories
 
-### 🔀 Code Diff Viewer
-- Side-by-side dual editor for comparing code changes
-- Real-time diff highlighting (green for additions, red for deletions)
-- Powered by Monaco Editor with syntax highlighting
-- Supports JavaScript and other languages
-- Editable diff view for both left and right panels
+### Code Diff Viewer
+- Side-by-side dual editor powered by CodeMirror Merge
+- Real-time diff highlighting (additions, deletions)
+- Editable panels with syntax highlighting
 
-### 📄 JSON Editor & Viewer
-- Full-featured JSON editor with Monaco Editor
-- Real-time JSON validation with error indicators
-- Format and minify JSON with one click
-- Visual JSON structure viewer
-- Syntax highlighting and auto-completion
+### JSON Explorer
+- Full-featured JSON editor with CodeMirror
+- Real-time validation, format & minify, and tree view via `react-json-view-lite`
+- Multi-document support with auto-save
 
-### 📝 Markdown Editor
-- Split-view editor with live preview
-- Monaco Editor with markdown syntax highlighting
-- Save and load multiple markdown files with custom names
-- Auto-save functionality for seamless editing
-- Export markdown files or import from disk
-- Toggle between edit and preview modes
-- Persistent storage using localStorage
+### Markdown Editor
+- Split-view editor with live preview using `react-markdown` + GFM
+- Save, load, and manage multiple markdown documents
+- Import/export from disk
 
-### 🎨 Mermaid Diagram Editor
-- Create and edit Mermaid diagrams with live preview
-- Support for flowcharts, sequence diagrams, Gantt charts, and more
-- Monaco Editor with Mermaid syntax highlighting
-- Save and manage multiple diagram files
-- Auto-save with automatic updates to selected files
-- Export diagrams as `.mmd` files or import existing ones
-- Theme-aware diagram rendering (dark/light mode)
-- Real-time error detection and validation
+### Mermaid Diagram Editor
+- Flowcharts, sequence diagrams, Gantt charts, and more
+- Live preview with theme-aware rendering (dark/light)
+- Save, load, import, and export `.mmd` files
 
-### 💻 JavaScript IDE
-- Write, run, and debug JavaScript code directly in your browser
-- Full-featured code editor with syntax highlighting
-- Execute code and see results instantly
-- Perfect for quick prototyping and testing
+### SVG Editor
+- Create and edit SVG graphics with live visual preview
+- Multi-document persistence
 
-### 💬 Daily Quotes
-- Inspirational daily quotes displayed on the home page
-- Fetched from ZenQuotes API
-- Minimal, elegant design that doesn't distract
-- Positioned at bottom-right for subtle inspiration
+### JavaScript Playground
+- Write and execute JavaScript directly in the browser
+- Code editor with syntax highlighting and instant output
 
-### ⚙️ Settings & Theme Management
-- Light, Dark, and System theme support
-- Persistent theme preferences
-- Automatic system theme detection
-- Seamless theme switching across all components
+### GitHub Trending
+- Discover trending repositories with filters for language, date range, and search
+- Stats overview (stars, forks) and saved filter preferences
 
-### 🏠 Dashboard & Navigation
-- Clean, intuitive home page with app cards
-- Fixed sidebar navigation for quick access
-- Lazy-loaded routes for optimal performance
-- Responsive design for all screen sizes
+### Daily Quotes
+- Inspirational daily quote from ZenQuotes API on the home page
 
-## 🛠️ Technical Stack
+### Settings & Themes
+- Light, Dark, Nord, and System theme modes
+- Workspace stats and storage overview
+- One-click data management
 
-### Core Technologies
-- **React 19** - Modern React with latest features
-- **Vite 7** - Fast build tool and dev server
-- **React Router DOM 7** - Client-side routing
-- **Tailwind CSS 4** - Utility-first CSS framework
+---
 
-### Key Libraries
-- **Monaco Editor** - VS Code's editor in the browser
-  - `@monaco-editor/react` - React wrapper for Monaco
-- **Mermaid** - Diagram and flowchart generation from text
-- **React Markdown** - Markdown rendering for React
-- **Diff Match Patch** - High-performance diff algorithm
-- **React JSON View Lite** - Lightweight JSON viewer
-- **TanStack Query** - Powerful data synchronization and caching
-- **Lucide React** - Beautiful icon library
-- **date-fns** - Date utility functions
+## Architecture
 
-### Architecture Highlights
-- **Lazy Loading**: All routes are code-split for optimal performance
-- **Theme System**: Centralized theme management with event-driven updates
-- **Storage Manager**: Abstraction layer for browser localStorage
-- **Component-Based**: Modular, reusable React components
-- **Type Safety**: TypeScript types for React components
-
-## 📦 Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Or using bun
-bun install
+```
+src/
+├── main.jsx                          # App entry — React root, QueryClient, BrowserRouter
+├── App.jsx                           # Shell layout — sidebar, header, routes, providers
+├── index.css                         # Global styles, theme variables, component styles
+│
+├── app/                              # Application-level wiring
+│   ├── registry.js                   # Aggregates module manifests, lookup maps, helpers
+│   ├── queryConfig.js                # TanStack Query default options
+│   ├── ToolRegistryContext.jsx        # React context + useToolRegistry / useCurrentTool hooks
+│   └── AppRoutes.jsx                 # Route generation from registry
+│
+├── modules/                          # Feature modules (each self-contained)
+│   ├── home/
+│   │   ├── manifest.js               # Module metadata (id, label, icon, route, component)
+│   │   ├── Home.jsx                  # Home page — recent docs, tool grid
+│   │   └── Quotes.jsx                # Daily quote widget
+│   ├── dashboard/
+│   │   ├── manifest.js
+│   │   └── Dashboard.jsx
+│   ├── tasks/
+│   │   ├── manifest.js
+│   │   └── components/TodoList.jsx
+│   ├── js-ide/
+│   │   ├── manifest.js
+│   │   └── components/
+│   │       ├── JSIDEApp.jsx
+│   │       ├── CodeEditor.jsx
+│   │       └── CodeRunner.jsx
+│   ├── diff-editor/
+│   │   ├── manifest.js
+│   │   └── components/DiffEditor.jsx
+│   ├── json-editor/
+│   │   ├── manifest.js
+│   │   └── components/JsonEditor.jsx
+│   ├── markdown/
+│   │   ├── manifest.js
+│   │   └── components/MarkdownEditor.jsx
+│   ├── mermaid/
+│   │   ├── manifest.js
+│   │   └── components/MermaidEditor.jsx
+│   ├── svg-editor/
+│   │   ├── manifest.js
+│   │   └── components/SvgEditor.jsx
+│   ├── github-trending/
+│   │   ├── manifest.js
+│   │   └── components/GitHubTrending.jsx
+│   └── settings/
+│       ├── manifest.js
+│       └── components/Settings.jsx
+│
+└── shared/                           # Cross-cutting shared layer
+    ├── components/
+    │   ├── Sidebar.jsx               # Category-grouped sidebar + mobile bottom bar
+    │   ├── AppHeader.jsx             # Breadcrumb header (uses useCurrentTool hook)
+    │   ├── SubAppToolbar.jsx         # Document switcher toolbar for editor modules
+    │   ├── RecentDocuments.jsx       # Recent docs section in sidebar
+    │   ├── AppCard.jsx               # Tool card for home/dashboard grid
+    │   ├── AppContainer.jsx          # Common page container
+    │   ├── AppBarIcon.jsx            # Reusable icon button
+    │   ├── ToastProvider.jsx         # Toast notification context
+    │   ├── ErrorBoundary.jsx         # React error boundary
+    │   └── Loader.jsx                # Suspense fallback spinner
+    ├── services/
+    │   ├── StorageManager.js         # Namespaced localStorage abstraction
+    │   ├── DocumentStore.js          # Per-module document CRUD and recent docs
+    │   └── themeManager.js           # Theme persistence and system-preference sync
+    └── hooks/
+        ├── useDocuments.js           # Document lifecycle hook for editor modules
+        └── useQuote.js               # Daily quote data hook (TanStack Query)
 ```
 
-## 🏃 Development
+### How modules register
+
+Each module declares a `manifest.js` colocated with its code:
+
+```js
+// src/modules/tasks/manifest.js
+import { lazy } from "react";
+
+export const manifest = {
+  id: "tasks",
+  key: "tasks",
+  label: "Tasks",
+  description: "Organize and track your development tasks.",
+  icon: "ListChecks",
+  route: "/tasks",
+  component: lazy(() => import("./components/TodoList")),
+  category: "productivity",
+};
+```
+
+`src/app/registry.js` imports all manifests and exposes O(1) lookup helpers (`getToolByKey`, `getToolById`), sidebar/card filters, and category labels. A `ToolRegistryProvider` context makes the registry available via `useToolRegistry()` and `useCurrentTool()` hooks — no scattered direct imports.
+
+### Key design decisions
+
+| Concern | Approach |
+|---|---|
+| Routing | Lazy-loaded per module via `React.lazy` + `Suspense` |
+| State | Local `useState` for UI; `StorageManager` for persistence; TanStack Query for async |
+| Theming | CSS custom properties + `data-theme` attribute; system preference listener |
+| Sidebar | Category-grouped (Productivity, Editors, Explore) with collapsed icon mode |
+| Documents | `DocumentStore` provides per-module multi-document CRUD with recent-docs aggregation |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19, React Router 7 |
+| Build | Vite 7 |
+| Styling | Tailwind CSS 4, CSS custom properties |
+| Code Editor | CodeMirror 6 (`@uiw/react-codemirror`) |
+| Diff | `react-codemirror-merge` |
+| Diagrams | Mermaid 11 |
+| Markdown | `react-markdown` + `remark-gfm` + `rehype-raw` |
+| JSON Viewer | `react-json-view-lite` |
+| Data | TanStack Query 5 (with sync-storage persister) |
+| Icons | Lucide React |
+| Compression | `lz-string` (document storage) |
+
+---
+
+## Getting Started
 
 ```bash
+# Clone the repository
+git clone https://github.com/chouhan-abhi/DevKit.git
+cd DevKit
+
+# Install dependencies
+bun install
+
 # Start development server
-npm run dev
+bun run dev
 
 # Build for production
-npm run build
+bun run build
 
 # Preview production build
-npm run preview
+bun run preview
 
-# Run linter
-npm run lint
+# Lint
+bun run lint
+
+# Deploy (builds + surge)
+bun run deploy
 ```
 
-## 🎨 Theming
+---
 
-DevKit uses a custom theme system that supports:
-- **Light Mode**: Clean, bright interface
-- **Dark Mode**: Easy on the eyes for extended use
-- **System Mode**: Automatically follows OS preference
+## Theming
 
-Themes are managed through CSS custom properties and Monaco Editor themes, ensuring consistent styling across all components.
+DevKit supports four theme modes managed through CSS custom properties and a centralized `themeManager`:
 
-## 💾 Data Persistence
+| Mode | Description |
+|---|---|
+| Light | Clean, bright interface |
+| Dark | Easy on the eyes for extended use |
+| Nord | Cool blue tones |
+| System | Automatically follows OS preference |
 
-- Tasks are stored in browser localStorage
-- Markdown files are saved with custom names and can be loaded anytime
-- Mermaid diagrams are persisted with full save/load functionality
-- Theme preferences are persisted across sessions
-- All data remains local to your browser for privacy and security
+All components — including CodeMirror editors and Mermaid diagrams — respond to theme changes via a `theme-changed` custom event.
 
-## 🔧 Configuration
+---
 
-Key configuration can be found in:
-- `src/utils/Constants.js` - App routes and navigation
-- `src/utils/themeManger.js` - Theme system configuration
-- `vite.config.js` - Build and dev server settings
+## Data Persistence
 
-## 📝 Scripts
+All data is stored locally in the browser using a namespaced `StorageManager`:
 
-- `npm run dev` - Start development server with HMR
-- `npm run build` - Create optimized production build
-- `npm run preview` - Preview production build locally
-- `npm run lint` - Run ESLint for code quality
+- Documents (markdown, JSON, mermaid, SVG, diff) are persisted per module
+- Task lists, filter preferences, and theme settings survive page reloads
+- No server, no accounts — your data stays on your machine
 
-## 🌐 Browser Support
+---
 
-Modern browsers with ES6+ support:
+## Browser Support
+
+Modern browsers with ES2020+ support:
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
 
-## 📄 License
+---
+
+## License
 
 This project is private and proprietary.
 
 ---
 
-Built with ❤️ using React + Vite
+Built with React + Vite

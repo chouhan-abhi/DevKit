@@ -2,12 +2,10 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Lucide from "lucide-react";
 import { Clock, ArrowRight } from "lucide-react";
-import { getToolCards, tools } from "../../app/registry";
+import { getToolCards, getToolById } from "../../app/registry";
 import { documentStore } from "../../shared/services/DocumentStore";
 import AppCard from "../../shared/components/AppCard";
 import Quotes from "./Quotes";
-
-const toolsByAppId = Object.fromEntries(tools.map((t) => [t.id, t]));
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -28,7 +26,7 @@ export default function Home() {
   const recentDocs = useMemo(() => {
     return documentStore
       .listAllRecentDocs(6)
-      .map((doc) => ({ ...doc, tool: toolsByAppId[doc.appId] }))
+      .map((doc) => ({ ...doc, tool: getToolById(doc.appId) }))
       .filter((d) => d.tool);
   }, []);
 
