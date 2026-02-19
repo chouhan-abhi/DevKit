@@ -206,6 +206,27 @@ const migrateOnce = () => {
 
 export const documentStore = {
   migrateOnce,
+  getStats() {
+    const store = getStore();
+    const allDocs = Object.values(store.docsById);
+    const byApp = {};
+    for (const doc of allDocs) {
+      byApp[doc.appId] = (byApp[doc.appId] || 0) + 1;
+    }
+    const storageBytes = new Blob([JSON.stringify(store)]).size;
+    return {
+      totalDocs: allDocs.length,
+      byApp,
+      storageBytes,
+      appCount: Object.keys(byApp).length,
+    };
+  },
+  listAllRecentDocs(limit = 10) {
+    const store = getStore();
+    return Object.values(store.docsById)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, limit);
+  },
   listDocs(appId) {
     const store = getStore();
     return getAppDocs(store, appId);

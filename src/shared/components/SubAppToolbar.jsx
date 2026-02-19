@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Search, Plus, Save, Trash2 } from "lucide-react";
+import { ChevronDown, Search, Plus, Copy, Trash2 } from "lucide-react";
 
 export default function SubAppToolbar({
   documents = [],
@@ -26,21 +26,15 @@ export default function SubAppToolbar({
 
   useEffect(() => {
     const handler = (event) => {
-      if (!event.target.closest(".toolbar-doc-combo")) {
-        setMenuOpen(false);
-      }
-      if (!event.target.closest(".toolbar-saveas")) {
-        setSaveAsOpen(false);
-      }
+      if (!event.target.closest(".toolbar-doc-combo")) setMenuOpen(false);
+      if (!event.target.closest(".toolbar-saveas")) setSaveAsOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   useEffect(() => {
-    if (saveAsOpen) {
-      requestAnimationFrame(() => saveAsInputRef.current?.focus());
-    }
+    if (saveAsOpen) requestAnimationFrame(() => saveAsInputRef.current?.focus());
   }, [saveAsOpen]);
 
   const filtered = useMemo(() => {
@@ -103,7 +97,7 @@ export default function SubAppToolbar({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search documents..."
+                  placeholder="Search..."
                 />
               </div>
               <div className="toolbar-dropdown-list">
@@ -120,26 +114,16 @@ export default function SubAppToolbar({
                       setMenuOpen(false);
                     }}
                   >
-                    <div className="item-title">{doc.title}</div>
-                    <div className="item-meta">
+                    <span>{doc.title}</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
                       {new Date(doc.updatedAt).toLocaleDateString()}
-                    </div>
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
           )}
         </div>
-
-        <button
-          type="button"
-          className="toolbar-btn compact"
-          onClick={onNew}
-          data-tooltip="New document"
-          aria-label="New document"
-        >
-          <Plus size={15} />
-        </button>
 
         <div className="toolbar-status-indicator">
           <span className={`toolbar-status-dot ${isSaving ? "saving" : ""}`} />
@@ -152,15 +136,25 @@ export default function SubAppToolbar({
       <div className="toolbar-divider" />
 
       <div className="toolbar-doc-actions">
+        <button
+          type="button"
+          className="toolbar-btn compact"
+          onClick={onNew}
+          data-tooltip="New"
+          aria-label="New document"
+        >
+          <Plus size={15} />
+        </button>
+
         <div className="toolbar-saveas">
           <button
             type="button"
             className="toolbar-btn compact"
             onClick={() => setSaveAsOpen((v) => !v)}
-            data-tooltip="Save as"
+            data-tooltip="Duplicate"
             aria-label="Save as"
           >
-            <Save size={14} />
+            <Copy size={14} />
           </button>
           {saveAsOpen && (
             <div className="toolbar-saveas-popover" onMouseDown={(e) => e.stopPropagation()}>
@@ -169,7 +163,7 @@ export default function SubAppToolbar({
                 type="text"
                 value={saveAsTitle}
                 onChange={(e) => setSaveAsTitle(e.target.value)}
-                placeholder="New document name"
+                placeholder="Document name"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSaveAs();
                   if (e.key === "Escape") {

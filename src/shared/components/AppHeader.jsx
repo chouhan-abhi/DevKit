@@ -1,82 +1,45 @@
 import * as Icons from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { ChevronRight, Home } from "lucide-react";
 import { tools } from "../../app/registry";
-import { ArrowLeft, Home } from "lucide-react";
 
-function AppHeader() {
-	const location = useLocation();
-	const navigate = useNavigate();
+export default function AppHeader() {
+	const { pathname } = useLocation();
 
-	const currentPath = location.pathname.replace("/", "");
+	const currentPath = pathname.replace("/", "");
 	const currentApp = tools.find((a) => a.key === currentPath);
 
-	if (!currentApp || location.pathname === "/") return null;
+	if (!currentApp || pathname === "/") return null;
 
 	const Icon = Icons[currentApp.icon] || null;
 
 	return (
 		<header
-			className="fixed top-0 left-0 w-full h-12 px-4 flex items-center gap-3 z-50 backdrop-blur-md border-b"
-			style={{
-				background: "var(--header-bg)",
-				borderColor: "var(--header-border)",
-			}}
+			className="flex items-center gap-2 px-6 py-3 text-sm"
+			style={{ color: "var(--text-muted)" }}
 		>
-			<button
-				type="button"
-				onClick={() => navigate(-1)}
-				className="flex items-center gap-1.5 text-sm font-medium transition-colors duration-150 rounded-lg px-2 py-1 -ml-1"
-				style={{ color: "var(--text-secondary)" }}
-				onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary-color)"; }}
-				onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; }}
-				aria-label="Go back"
-			>
-				<ArrowLeft size={16} />
-				<span className="hidden sm:inline">Back</span>
-			</button>
-
-			<div className="w-px h-5" style={{ background: "var(--border-color)" }} />
-
-			<div className="flex items-center gap-2.5">
-				{Icon && (
-					<div
-						className="w-7 h-7 flex items-center justify-center rounded-lg"
-						style={{
-							background: "rgba(99, 102, 241, 0.1)",
-						}}
-					>
-						<Icon size={15} style={{ color: "var(--primary-color)" }} />
-					</div>
-				)}
-				<h1
-					className="text-sm font-semibold tracking-wide"
-					style={{ color: "var(--text-color)" }}
-				>
-					{currentApp.label}
-				</h1>
-			</div>
-
 			<Link
 				to="/"
-				className="ml-auto flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all duration-150"
-				style={{
-					color: "var(--text-muted)",
-					border: "1px solid var(--border-color)",
-				}}
-				onMouseEnter={(e) => {
-					e.currentTarget.style.color = "var(--primary-color)";
-					e.currentTarget.style.borderColor = "var(--primary-color)";
-				}}
-				onMouseLeave={(e) => {
-					e.currentTarget.style.color = "var(--text-muted)";
-					e.currentTarget.style.borderColor = "var(--border-color)";
-				}}
+				className="flex items-center gap-1 hover:underline"
+				style={{ color: "var(--text-muted)" }}
 			>
-				<Home size={13} />
-				<span className="hidden sm:inline">Home</span>
+				<Home size={14} />
+				<span>Home</span>
 			</Link>
+
+			<ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+
+			<div className="flex items-center gap-2" style={{ color: "var(--text-color)" }}>
+				{Icon && (
+					<div
+						className="w-6 h-6 flex items-center justify-center rounded"
+						style={{ background: "rgba(0, 82, 204, 0.08)" }}
+					>
+						<Icon size={14} style={{ color: "var(--primary-color)" }} />
+					</div>
+				)}
+				<span className="font-medium">{currentApp.label}</span>
+			</div>
 		</header>
 	);
 }
-
-export default AppHeader;

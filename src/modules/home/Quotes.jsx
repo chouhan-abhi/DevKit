@@ -7,17 +7,17 @@ export default function Quotes() {
 
   return (
     <div
-      className="fixed bottom-5 right-16 md:right-20 max-w-sm text-right z-30 hidden md:block"
-      style={{ color: "var(--text-color)" }}
+      className="mt-12 pt-6 border-t text-center"
+      style={{ borderColor: "var(--border-subtle)" }}
     >
       <blockquote
-        className="text-sm italic leading-relaxed"
+        className="text-sm italic max-w-md mx-auto"
         style={{ color: "var(--text-muted)" }}
       >
         &ldquo;{quote.q}&rdquo;
       </blockquote>
       <footer
-        className="text-xs mt-1.5 font-medium"
+        className="text-xs mt-2 font-medium"
         style={{ color: "var(--text-muted)", opacity: 0.7 }}
       >
         &mdash; {quote.a}
