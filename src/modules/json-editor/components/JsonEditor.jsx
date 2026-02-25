@@ -7,6 +7,7 @@ import { json } from "@codemirror/lang-json";
 import { themeManager } from "../../../shared/services/themeManager";
 import SubAppToolbar from "../../../shared/components/SubAppToolbar";
 import { useDocuments } from "../../../shared/hooks/useDocuments";
+import { useKeyboardShortcuts, formatShortcut } from "../../../shared/hooks/useKeyboardShortcuts";
 
 const JsonEditor = () => {
   const parseTimerRef = useRef(null);
@@ -83,6 +84,16 @@ const JsonEditor = () => {
 
   const extensions = useMemo(() => [json()], []);
 
+  const shortcuts = useMemo(() => ({
+    format: { mod: true, shift: true, key: "f" },
+    minify: { mod: true, shift: true, key: "m" },
+  }), []);
+
+  useKeyboardShortcuts([
+    { shortcut: shortcuts.format, action: formatJson },
+    { shortcut: shortcuts.minify, action: minifyJson },
+  ]);
+
   return (
     <div className="h-full w-full flex flex-col min-h-0" style={{ background: "var(--bg-color)" }}>
       <div className="p-3 pb-0">
@@ -98,10 +109,10 @@ const JsonEditor = () => {
           status={isSaving ? "saving" : "saved"}
           rightActions={
             <>
-              <button onClick={formatJson} className="toolbar-btn" type="button" data-tooltip="Format JSON">
+              <button onClick={formatJson} className="toolbar-btn" type="button" data-tooltip={`Format JSON (${formatShortcut(shortcuts.format)})`}>
                 <Code size={14} /> Format
               </button>
-              <button onClick={minifyJson} className="toolbar-btn" type="button" data-tooltip="Minify JSON">
+              <button onClick={minifyJson} className="toolbar-btn" type="button" data-tooltip={`Minify JSON (${formatShortcut(shortcuts.minify)})`}>
                 <Minimize2 size={14} /> Minify
               </button>
             </>

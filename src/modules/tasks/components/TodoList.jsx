@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import SubAppToolbar from "../../../shared/components/SubAppToolbar";
 import { useDocuments } from "../../../shared/hooks/useDocuments";
+import { useKeyboardShortcuts } from "../../../shared/hooks/useKeyboardShortcuts";
 
 const COLUMNS = [
   { key: "todo",    label: "To Do",     icon: Circle,       color: "var(--text-muted)" },
@@ -36,6 +37,7 @@ export default function TodoList() {
   const [menuTaskId, setMenuTaskId] = useState(null);
   const dragItem = useRef(null);
   const dragOverColumn = useRef(null);
+  const taskInputRef = useRef(null);
 
   const {
     documents, currentId, title, content, setContent,
@@ -122,6 +124,10 @@ export default function TodoList() {
 
   const totalCount = tasks.length;
 
+  useKeyboardShortcuts([
+    { shortcut: { mod: true, shift: true, key: "a" }, action: () => taskInputRef.current?.focus() },
+  ]);
+
   return (
     <div
       className="h-full w-full flex flex-col min-h-0"
@@ -144,6 +150,7 @@ export default function TodoList() {
       {/* Add task bar */}
       <div className="px-4 py-3 flex gap-2 items-center flex-shrink-0">
         <input
+          ref={taskInputRef}
           type="text"
           value={taskText}
           onChange={(e) => setTaskText(e.target.value)}

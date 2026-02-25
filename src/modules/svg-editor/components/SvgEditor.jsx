@@ -8,6 +8,7 @@ import { xml } from "@codemirror/lang-xml";
 import { themeManager } from "../../../shared/services/themeManager";
 import SubAppToolbar from "../../../shared/components/SubAppToolbar";
 import { useDocuments } from "../../../shared/hooks/useDocuments";
+import { useKeyboardShortcuts, formatShortcut } from "../../../shared/hooks/useKeyboardShortcuts";
 
 const SvgEditor = () => {
   const initialSvg = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -138,6 +139,16 @@ const SvgEditor = () => {
 
   const extensions = useMemo(() => [xml()], []);
 
+  const shortcuts = useMemo(() => ({
+    preview: { mod: true, shift: true, key: "p" },
+    exportSvg: { mod: true, shift: true, key: "e" },
+  }), []);
+
+  useKeyboardShortcuts([
+    { shortcut: shortcuts.preview,   action: () => setPreviewMode((v) => !v) },
+    { shortcut: shortcuts.exportSvg, action: () => handleExport("svg") },
+  ]);
+
   const shapeEntries = [
     { key: "circle", Icon: Circle },
     { key: "square", Icon: Square },
@@ -175,7 +186,7 @@ const SvgEditor = () => {
                 onClick={() => setPreviewMode(!previewMode)}
                 className="toolbar-btn"
                 type="button"
-                data-tooltip={previewMode ? "Switch to editor" : "Full preview"}
+                data-tooltip={`${previewMode ? "Switch to editor" : "Full preview"} (${formatShortcut(shortcuts.preview)})`}
               >
                 {previewMode ? <Edit size={14} /> : <Eye size={14} />}
                 {previewMode ? "Edit" : "Preview"}

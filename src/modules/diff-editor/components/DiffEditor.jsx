@@ -5,6 +5,7 @@ import { themeManager } from "../../../shared/services/themeManager";
 import SubAppToolbar from "../../../shared/components/SubAppToolbar";
 import { useDocuments } from "../../../shared/hooks/useDocuments";
 import { ArrowLeftRight } from "lucide-react";
+import { useKeyboardShortcuts, formatShortcut } from "../../../shared/hooks/useKeyboardShortcuts";
 
 const Original = CodeMirrorMerge.Original;
 const Modified = CodeMirrorMerge.Modified;
@@ -41,6 +42,17 @@ export default function DualEditableDiff() {
 
   const extensions = useMemo(() => [javascript({ jsx: true })], []);
 
+  const swapSides = () =>
+    setContent((prev) => ({ left: prev?.right || "", right: prev?.left || "" }));
+
+  const shortcuts = useMemo(() => ({
+    swap: { mod: true, shift: true, key: "x" },
+  }), []);
+
+  useKeyboardShortcuts([
+    { shortcut: shortcuts.swap, action: swapSides },
+  ]);
+
   return (
     <div className="h-full w-full flex flex-col min-h-0" style={{ background: "var(--bg-color)" }}>
       <div className="p-3 pb-0">
@@ -60,10 +72,8 @@ export default function DualEditableDiff() {
             <button
               type="button"
               className="toolbar-btn"
-              onClick={() =>
-                setContent((prev) => ({ left: prev?.right || "", right: prev?.left || "" }))
-              }
-              data-tooltip="Swap left/right"
+              onClick={swapSides}
+              data-tooltip={`Swap left/right (${formatShortcut(shortcuts.swap)})`}
             >
               <ArrowLeftRight size={14} />
               Swap

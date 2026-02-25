@@ -1,5 +1,6 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { Play, Trash2, Terminal, Loader2 } from "lucide-react";
+import { useKeyboardShortcuts, formatShortcut } from "../../../shared/hooks/useKeyboardShortcuts";
 
 export default function CodeRunner({ code = "" }) {
   const iframeRef = useRef(null);
@@ -77,6 +78,14 @@ export default function CodeRunner({ code = "" }) {
     setExecTime(null);
   };
 
+  const shortcuts = useMemo(() => ({
+    run: { mod: true, shift: false, key: "Enter" },
+  }), []);
+
+  useKeyboardShortcuts([
+    { shortcut: shortcuts.run, action: runCode },
+  ]);
+
   // Auto-run with 2s debounce
   useEffect(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -140,6 +149,7 @@ export default function CodeRunner({ code = "" }) {
             onClick={runCode}
             disabled={isRunning}
             className="toolbar-btn"
+            data-tooltip={`Run (${formatShortcut(shortcuts.run)})`}
             style={{ fontSize: "0.75rem", padding: "4px 10px" }}
           >
             {isRunning ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}

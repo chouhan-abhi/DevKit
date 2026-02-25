@@ -6,6 +6,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { themeManager } from "../../../shared/services/themeManager";
 import SubAppToolbar from "../../../shared/components/SubAppToolbar";
 import { useDocuments } from "../../../shared/hooks/useDocuments";
+import { useKeyboardShortcuts, formatShortcut } from "../../../shared/hooks/useKeyboardShortcuts";
 
 const MermaidEditor = () => {
   const initialMermaid = `graph TD
@@ -268,6 +269,16 @@ const MermaidEditor = () => {
     [mermaidCompletions]
   );
 
+  const shortcuts = useMemo(() => ({
+    preview: { mod: true, shift: true, key: "p" },
+    format:  { mod: true, shift: true, key: "f" },
+  }), []);
+
+  useKeyboardShortcuts([
+    { shortcut: shortcuts.preview, action: () => setPreviewMode((v) => !v) },
+    { shortcut: shortcuts.format,  action: formatMermaid },
+  ]);
+
   return (
     <div className="h-full w-full flex flex-col min-h-0" style={{ background: "var(--bg-color)" }}>
       <div className="p-3 pb-0">
@@ -283,7 +294,7 @@ const MermaidEditor = () => {
           status={isSaving ? "saving" : "saved"}
           rightActions={
             <>
-              <button onClick={formatMermaid} className="toolbar-btn compact" type="button" data-tooltip="Format" aria-label="Format">
+              <button onClick={formatMermaid} className="toolbar-btn compact" type="button" data-tooltip={`Format (${formatShortcut(shortcuts.format)})`} aria-label="Format">
                 <Sparkles size={14} />
               </button>
               <button onClick={handleCopyToClipboard} className="toolbar-btn compact" type="button" data-tooltip={copied ? "Copied!" : "Copy"} aria-label="Copy">
@@ -308,7 +319,7 @@ const MermaidEditor = () => {
                 <input type="file" accept=".mmd,.mermaid" onChange={handleImport} className="hidden" />
               </label>
               <div className="toolbar-divider" />
-              <button onClick={() => setPreviewMode(!previewMode)} className="toolbar-btn" type="button" data-tooltip={previewMode ? "Back to editor" : "Full preview"}>
+              <button onClick={() => setPreviewMode(!previewMode)} className="toolbar-btn" type="button" data-tooltip={`${previewMode ? "Back to editor" : "Full preview"} (${formatShortcut(shortcuts.preview)})`}>
                 {previewMode ? <Edit size={14} /> : <Eye size={14} />}
                 {previewMode ? "Edit" : "Preview"}
               </button>
