@@ -7,6 +7,8 @@ import { manifest as json } from "../modules/json-editor/manifest";
 import { manifest as markdown } from "../modules/markdown/manifest";
 import { manifest as mermaid } from "../modules/mermaid/manifest";
 import { manifest as svgEditor } from "../modules/svg-editor/manifest";
+import { manifest as colorPalette } from "../modules/color-palette/manifest";
+import { manifest as cookieEditor } from "../modules/cookie-editor/manifest";
 import { manifest as githubTrending } from "../modules/github-trending/manifest";
 import { manifest as settings } from "../modules/settings/manifest";
 
@@ -26,6 +28,8 @@ export const tools = [
 	markdown,
 	mermaid,
 	svgEditor,
+	colorPalette,
+	cookieEditor,
 	githubTrending,
 	settings,
 ];
