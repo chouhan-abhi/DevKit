@@ -237,6 +237,93 @@ function CookieRow({ cookie, isEditing, isDecoding, onEdit, onCancelEdit, onSave
 	);
 }
 
+function ParsedCookieCard({ cookie, onSaveToBrowser }) {
+	const { showToast } = useToast();
+	const decoded = useMemo(() => tryDecodeAll(cookie.value), [cookie.value]);
+	const [editing, setEditing] = useState(false);
+	const [editValue, setEditValue] = useState(cookie.value);
+	const [expanded, setExpanded] = useState(false);
+
+	const decodedEntries = [
+		decoded.urlDecoded && decoded.urlDecoded !== cookie.value && { label: "URL Decoded", val: decoded.urlDecoded },
+		decoded.base64Decoded && { label: "Base64 Decoded", val: decoded.base64Decoded },
+		decoded.jwt && { label: "JWT Payload", val: JSON.stringify(decoded.jwt, null, 2) },
+	].filter(Boolean);
+
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(`${cookie.name}=${cookie.value}`);
+			showToast("Cookie copied");
+		} catch { /* */ }
+	};
+
+	const handleSave = () => {
+		onSaveToBrowser({ name: cookie.name, value: editValue, path: "/" });
+		setEditing(false);
+		showToast(`"${cookie.name}" saved to browser`);
+	};
+
+	return (
+		<div className="ck-parsed-card">
+			<div className="ck-parsed-card-header">
+				<span className="ck-cell-name">{cookie.name}</span>
+				<div className="ck-parsed-card-actions">
+					<button type="button" className="toolbar-btn compact" onClick={() => setExpanded((v) => !v)} data-tooltip={expanded ? "Collapse" : "Expand"}>
+						<Eye size={13} />
+					</button>
+					<button type="button" className="toolbar-btn compact" onClick={() => { setEditing(true); setEditValue(cookie.value); }} data-tooltip="Edit">
+						<Pencil size={13} />
+					</button>
+					<button type="button" className="toolbar-btn compact" onClick={handleCopy} data-tooltip="Copy">
+						<Copy size={13} />
+					</button>
+					<button type="button" className="toolbar-btn compact" onClick={handleSave} data-tooltip="Save to browser">
+						<Plus size={13} />
+					</button>
+				</div>
+			</div>
+
+			<div className="ck-parsed-card-value">
+				<code className="ck-code">{cookie.value.length > 80 ? `${cookie.value.slice(0, 80)}…` : cookie.value}</code>
+			</div>
+
+			{editing && (
+				<div className="ck-parsed-card-edit">
+					<textarea
+						className="ck-textarea"
+						rows={3}
+						value={editValue}
+						onChange={(e) => setEditValue(e.target.value)}
+						spellCheck={false}
+					/>
+					<div className="ck-form-actions">
+						<button type="button" className="toolbar-btn" onClick={handleSave}>
+							<Check size={14} /> Save to Browser
+						</button>
+						<button type="button" className="toolbar-btn" onClick={() => setEditing(false)}>
+							<X size={14} /> Cancel
+						</button>
+					</div>
+				</div>
+			)}
+
+			{expanded && decodedEntries.length > 0 && (
+				<div className="ck-decoded">
+					{decodedEntries.map(({ label, val }) => (
+						<div key={label} className="ck-decoded-row">
+							<span className="ck-decoded-label">{label}</span>
+							<pre className="ck-decoded-value">{val}</pre>
+						</div>
+					))}
+				</div>
+			)}
+			{expanded && decodedEntries.length === 0 && (
+				<div className="ck-decoded-empty">No alternate decodings found.</div>
+			)}
+		</div>
+	);
+}
+
 function EncodeDecodeTab() {
 	const { showToast } = useToast();
 	const [input, setInput] = useState("");
@@ -265,6 +352,10 @@ function EncodeDecodeTab() {
 		[craftName, encodedValue, craftPath, craftSecure, craftSameSite],
 	);
 
+	const handleSaveToBrowser = (cookieData) => {
+		setCookie(cookieData);
+	};
+
 	const copyHeader = async () => {
 		try {
 			await navigator.clipboard.writeText(setCookieHeader);
@@ -272,45 +363,36 @@ function EncodeDecodeTab() {
 		} catch { /* */ }
 	};
 
+	const saveCraftedToBrowser = () => {
+		if (!craftName) { showToast("Cookie name is required"); return; }
+		setCookie({ name: craftName, value: encodedValue, path: craftPath, secure: craftSecure, sameSite: craftSameSite });
+		showToast(`"${craftName}" saved to browser`);
+	};
+
 	return (
 		<div className="ck-encode">
 			<div className="ck-encode-section">
-				<label className="ck-encode-label">Paste Cookie Header String</label>
+				<label className="ck-encode-label">Paste Cookie String (Encoded or Decoded)</label>
 				<textarea
 					className="ck-textarea"
 					rows={3}
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
-					placeholder="Cookie: _ga=GA1.2.123; session=eyJhbG...; theme=dark"
+					placeholder="Paste a Cookie header, Set-Cookie value, or any cookie string&#10;e.g. Cookie: _ga=GA1.2.123; session=eyJhbG...; theme=dark"
 					spellCheck={false}
 				/>
 			</div>
 
 			{parsed.length > 0 && (
-				<div className="ck-table-wrap">
-					<table className="ck-table">
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Raw Value</th>
-								<th>URL Decoded</th>
-								<th>Base64 Decoded</th>
-							</tr>
-						</thead>
-						<tbody>
-							{parsed.map((c, i) => {
-								const decoded = tryDecodeAll(c.value);
-								return (
-									<tr key={`${c.name}-${i}`}>
-										<td className="ck-cell-name">{c.name}</td>
-										<td><code className="ck-code">{c.value.length > 40 ? `${c.value.slice(0, 40)}…` : c.value}</code></td>
-										<td>{decoded.urlDecoded && decoded.urlDecoded !== c.value ? <code className="ck-code">{decoded.urlDecoded}</code> : <span className="ck-dim">same</span>}</td>
-										<td>{decoded.base64Decoded ? <code className="ck-code">{decoded.base64Decoded.slice(0, 60)}</code> : <span className="ck-dim">invalid</span>}</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
+				<div className="ck-parsed-list">
+					<div className="ck-encode-label">Parsed Cookies ({parsed.length})</div>
+					{parsed.map((c, i) => (
+						<ParsedCookieCard
+							key={`${c.name}-${i}`}
+							cookie={c}
+							onSaveToBrowser={handleSaveToBrowser}
+						/>
+					))}
 				</div>
 			)}
 
@@ -348,9 +430,14 @@ function EncodeDecodeTab() {
 				</div>
 				<div className="ck-craft-result">
 					<code className="ck-code ck-code--block">{setCookieHeader}</code>
-					<button type="button" className="toolbar-btn compact" onClick={copyHeader} data-tooltip="Copy">
-						<Copy size={14} />
-					</button>
+					<div className="ck-craft-result-actions">
+						<button type="button" className="toolbar-btn compact" onClick={copyHeader} data-tooltip="Copy header">
+							<Copy size={14} />
+						</button>
+						<button type="button" className="toolbar-btn" onClick={saveCraftedToBrowser} data-tooltip="Save to browser">
+							<Plus size={14} /> Save
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -116,6 +116,18 @@ export function deriveShadow(hex) {
 	return hslToHex(h, clamp(s - 40, 0, 100), 18);
 }
 
+export function generateSuggestions(hex, count = 2) {
+	const [h, s, l] = hexToHsl(hex);
+	const step = 12;
+	const darker = [];
+	const lighter = [];
+	for (let i = 1; i <= count; i++) {
+		lighter.push(hslToHex(h, s, clamp(l + step * i, 5, 97)));
+		darker.push(hslToHex(h, s, clamp(l - step * i, 5, 97)));
+	}
+	return { lighter, darker };
+}
+
 export function buildPalette(primaryHex, steps, overrides = {}) {
 	const roles = {
 		primary: primaryHex,
