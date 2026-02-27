@@ -22,6 +22,30 @@ const EMPTY_FORM = {
 	expires: "", secure: false, sameSite: "Lax", maxAge: "",
 };
 
+const safeDecode = (value) => {
+	try { return decodeURIComponent(value); } catch { return value; }
+};
+
+const withCookiePrefix = (source, output) => (source.trim().toLowerCase().startsWith("cookie:") ? `Cookie: ${output}` : output);
+
+function decodeCookieString(input) {
+	const parsed = parseCookieString(input);
+	if (parsed.length === 0) return safeDecode(input);
+	const decoded = parsed
+		.map(({ name, value }) => `${safeDecode(name)}=${safeDecode(value)}`)
+		.join("; ");
+	return withCookiePrefix(input, decoded);
+}
+
+function encodeCookieString(input) {
+	const parsed = parseCookieString(input);
+	if (parsed.length === 0) return encodeURIComponent(input);
+	const encoded = parsed
+		.map(({ name, value }) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
+		.join("; ");
+	return withCookiePrefix(input, encoded);
+}
+
 function CookieForm({ initial = EMPTY_FORM, onSave, onCancel, isNew }) {
 	const [form, setForm] = useState({ ...EMPTY_FORM, ...initial });
 	const nameRef = useRef(null);
@@ -139,7 +163,9 @@ function LiveCookiesTab() {
 		try {
 			await navigator.clipboard.writeText(`${name}=${value}`);
 			showToast("Cookie copied");
-		} catch { /* */ }
+		} catch {
+			showToast("Failed to copy cookie");
+		}
 	};
 
 	const shortcuts = useMemo(() => ({
@@ -254,7 +280,9 @@ function ParsedCookieCard({ cookie, onSaveToBrowser }) {
 		try {
 			await navigator.clipboard.writeText(`${cookie.name}=${cookie.value}`);
 			showToast("Cookie copied");
-		} catch { /* */ }
+		} catch {
+			showToast("Failed to copy cookie");
+		}
 	};
 
 	const handleSave = () => {
@@ -326,8 +354,9 @@ function ParsedCookieCard({ cookie, onSaveToBrowser }) {
 
 function EncodeDecodeTab() {
 	const { showToast } = useToast();
-	const [input, setInput] = useState("");
-	const parsed = useMemo(() => parseCookieString(input), [input]);
+	const [encodedInput, setEncodedInput] = useState("");
+	const [decodedInput, setDecodedInput] = useState("");
+	const parsed = useMemo(() => parseCookieString(encodedInput), [encodedInput]);
 
 	const [craftName, setCraftName] = useState("");
 	const [craftValue, setCraftValue] = useState("");
@@ -354,13 +383,44 @@ function EncodeDecodeTab() {
 
 	const handleSaveToBrowser = (cookieData) => {
 		setCookie(cookieData);
+		showToast(`"${cookieData.name}" saved to browser`);
+	};
+
+	const handleEncodedChange = (value) => {
+		setEncodedInput(value);
+		setDecodedInput(decodeCookieString(value));
+	};
+
+	const handleDecodedChange = (value) => {
+		setDecodedInput(value);
+		setEncodedInput(encodeCookieString(value));
+	};
+
+	const copyEncoded = async () => {
+		try {
+			await navigator.clipboard.writeText(encodedInput);
+			showToast("Encoded cookie string copied");
+		} catch {
+			showToast("Failed to copy encoded string");
+		}
+	};
+
+	const copyDecoded = async () => {
+		try {
+			await navigator.clipboard.writeText(decodedInput);
+			showToast("Decoded cookie string copied");
+		} catch {
+			showToast("Failed to copy decoded string");
+		}
 	};
 
 	const copyHeader = async () => {
 		try {
 			await navigator.clipboard.writeText(setCookieHeader);
 			showToast("Set-Cookie header copied");
-		} catch { /* */ }
+		} catch {
+			showToast("Failed to copy Set-Cookie header");
+		}
 	};
 
 	const saveCraftedToBrowser = () => {
@@ -371,16 +431,39 @@ function EncodeDecodeTab() {
 
 	return (
 		<div className="ck-encode">
-			<div className="ck-encode-section">
-				<label className="ck-encode-label">Paste Cookie String (Encoded or Decoded)</label>
-				<textarea
-					className="ck-textarea"
-					rows={3}
-					value={input}
-					onChange={(e) => setInput(e.target.value)}
-					placeholder="Paste a Cookie header, Set-Cookie value, or any cookie string&#10;e.g. Cookie: _ga=GA1.2.123; session=eyJhbG...; theme=dark"
-					spellCheck={false}
-				/>
+			<div className="ck-encode-dual">
+				<div className="ck-encode-section">
+					<div className="ck-encode-row-head">
+						<label className="ck-encode-label">Encoded Cookie String</label>
+						<button type="button" className="toolbar-btn compact" onClick={copyEncoded} data-tooltip="Copy encoded">
+							<Copy size={14} />
+						</button>
+					</div>
+					<textarea
+						className="ck-textarea"
+						rows={5}
+						value={encodedInput}
+						onChange={(e) => handleEncodedChange(e.target.value)}
+						placeholder="Paste encoded cookie string&#10;e.g. Cookie: session=eyJhbGciOi...; theme=dark"
+						spellCheck={false}
+					/>
+				</div>
+				<div className="ck-encode-section">
+					<div className="ck-encode-row-head">
+						<label className="ck-encode-label">Decoded Cookie String (Editable)</label>
+						<button type="button" className="toolbar-btn compact" onClick={copyDecoded} data-tooltip="Copy decoded">
+							<Copy size={14} />
+						</button>
+					</div>
+					<textarea
+						className="ck-textarea"
+						rows={5}
+						value={decodedInput}
+						onChange={(e) => handleDecodedChange(e.target.value)}
+						placeholder="Decoded view updates live so you can edit readable cookie values"
+						spellCheck={false}
+					/>
+				</div>
 			</div>
 
 			{parsed.length > 0 && (
@@ -450,6 +533,7 @@ const TABS = [
 ];
 
 const CookieEditor = () => {
+	const { showToast } = useToast();
 	const [tab, setTab] = useState("live");
 
 	return (
@@ -460,7 +544,10 @@ const CookieEditor = () => {
 						key={t.key}
 						type="button"
 						className={`ck-tab ${tab === t.key ? "ck-tab--active" : ""}`}
-						onClick={() => setTab(t.key)}
+						onClick={() => {
+							setTab(t.key);
+							showToast(`${t.label} tab opened`, 1500);
+						}}
 					>
 						{t.label}
 					</button>

@@ -999,7 +999,7 @@ body {
 
 .app-toast {
   position: fixed;
-  top: 72px;
+  bottom: 20px;
   right: 20px;
   z-index: 60;
   background: var(--bg-elevated);
@@ -1312,7 +1312,6 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color);
   gap: 12px;
 }
 .cp-toolbar-left, .cp-toolbar-right { display: flex; align-items: center; gap: 8px; }
@@ -1336,33 +1335,187 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: auto;
+  padding: 14px;
+}
+.cp-palette-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+.cp-palette-layout--single {
+  grid-template-columns: 1fr;
+}
+.cp-palette-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cp-palette-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.cp-palette-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--header-bg);
+}
+.cp-palette-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+.cp-palette-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .cp-strips-stack {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  gap: 6px;
+  padding: 10px;
 }
 .cp-strip {
-  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
   border: none;
   cursor: pointer;
-  min-height: 52px;
-  transition: outline 0.15s ease;
+  min-height: 48px;
+  transition: outline 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
   outline: 2px solid transparent;
-  outline-offset: -2px;
+  outline-offset: 0;
+  border-radius: var(--radius-sm);
   position: relative;
 }
 .cp-strip--active { outline-color: var(--primary-color); z-index: 1; }
-.cp-strip:hover { outline-color: rgba(255,255,255,0.25); z-index: 1; }
+.cp-strip:hover { outline-color: rgba(255,255,255,0.25); z-index: 1; transform: translateY(-1px); }
 .cp-strip--active:hover { outline-color: var(--primary-color); }
+.cp-strip--dragging { opacity: 0.35; transform: scale(0.98); }
+.cp-strip--drop-target { box-shadow: 0 0 0 2px var(--primary-color); }
+.cp-strip-grip {
+  display: flex;
+  align-items: center;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
 .cp-strip-label { font-size: 13px; font-weight: 600; text-transform: capitalize; opacity: 0.85; }
-.cp-strip-hex { font-size: 12px; font-family: var(--font-mono); opacity: 0.7; }
+.cp-strip-hex { font-size: 12px; font-family: var(--font-mono); opacity: 0.8; margin-left: auto; }
+
+.cp-app-preview {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 10px 12px;
+  background: var(--bg-color);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.cp-app-preview-header {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0 10px;
+  cursor: pointer;
+}
+.cp-app-preview-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.cp-app-frame {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-height: 236px;
+}
+.cp-app-topbar {
+  height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cp-app-brand {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-app-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cp-app-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  opacity: 0.9;
+}
+.cp-app-body {
+  display: flex;
+  min-height: 196px;
+}
+.cp-app-sidebar {
+  width: 34%;
+  padding: 10px;
+  border-right: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cp-app-main {
+  flex: 1;
+  padding: 10px;
+}
+.cp-app-card {
+  height: 100%;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cp-app-skeleton {
+  height: 9px;
+  border-radius: 6px;
+  opacity: 0.5;
+}
+.cp-app-skeleton--title { width: 72%; height: 12px; }
+.cp-app-skeleton--heading { width: 60%; height: 11px; }
+.cp-app-skeleton--short { width: 44%; }
+.cp-app-cta {
+  margin-top: auto;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
 
 /* Tools panel (right) */
 .cp-tools {
@@ -1543,6 +1696,11 @@ body {
 }
 
 @media (max-width: 768px) {
+  .cp-strips-panel { padding: 10px; }
+  .cp-palette-layout,
+  .cp-palette-layout--single { grid-template-columns: 1fr; }
+  .cp-app-body { flex-direction: column; }
+  .cp-app-sidebar { width: 100%; border-right: none; border-bottom: 1px solid; }
   .cp-tools { width: 100%; border-left: none; border-top: 1px solid var(--border-color); max-height: 50vh; }
 }
 
@@ -1727,7 +1885,18 @@ body {
 }
 
 .ck-encode { display: flex; flex-direction: column; gap: 16px; }
+.ck-encode-dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 .ck-encode-section { display: flex; flex-direction: column; gap: 6px; }
+.ck-encode-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .ck-encode-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
 .ck-textarea {
   width: 100%;
@@ -1790,4 +1959,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .ck-encode-dual {
+    grid-template-columns: 1fr;
+  }
 }

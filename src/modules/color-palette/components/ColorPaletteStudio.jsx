@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 import {
-	Copy, Check, Download, Image, Plus, Trash2, RotateCcw,
+	Copy, Check, Download, Image, Plus, Trash2, RotateCcw, GripVertical, Eye, EyeOff,
 } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json as jsonLang } from "@codemirror/lang-json";
@@ -108,11 +108,28 @@ const ColorPaletteStudio = () => {
 	const [paletteName, setPaletteName] = useState("My Palette");
 	const [copiedJson, setCopiedJson] = useState(false);
 	const [jsonOpen, setJsonOpen] = useState(true);
+	const [previewOpen, setPreviewOpen] = useState(true);
+	const [dragIdx, setDragIdx] = useState(null);
+	const [dragOverIdx, setDragOverIdx] = useState(null);
 	const canvasRef = useRef(null);
 
 	const selected = strips[selectedIdx] ?? strips[0];
 	const selectedHsl = useMemo(() => hexToHsl(selected.color), [selected.color]);
 	const suggestions = useMemo(() => generateSuggestions(selected.color, 2), [selected.color]);
+	const stripColorMap = useMemo(() => {
+		const map = {};
+		strips.forEach((s) => {
+			map[s.key.toLowerCase()] = s.color;
+		});
+		return map;
+	}, [strips]);
+	const getPreviewColor = useCallback((keys, fallback) => {
+		for (const key of keys) {
+			const color = stripColorMap[key];
+			if (color) return color;
+		}
+		return fallback;
+	}, [stripColorMap]);
 
 	const paletteConfig = useMemo(() => {
 		const colorMap = {};
@@ -145,6 +162,22 @@ const ColorPaletteStudio = () => {
 		setStrips((prev) => prev.filter((_, i) => i !== idx));
 		setSelectedIdx((prev) => Math.min(prev, strips.length - 2));
 	}, [strips.length]);
+
+	const handleStripDrop = useCallback((fromIdx, toIdx) => {
+		if (fromIdx === toIdx || fromIdx == null || toIdx == null) return;
+		setStrips((prev) => {
+			const next = [...prev];
+			const [moved] = next.splice(fromIdx, 1);
+			next.splice(toIdx, 0, moved);
+			return next;
+		});
+		setSelectedIdx((prev) => {
+			if (prev === fromIdx) return toIdx;
+			if (fromIdx < prev && prev <= toIdx) return prev - 1;
+			if (toIdx <= prev && prev < fromIdx) return prev + 1;
+			return prev;
+		});
+	}, []);
 
 	const handleSwatchCopy = useCallback(async (hex) => {
 		try {
@@ -263,23 +296,129 @@ const ColorPaletteStudio = () => {
 			<div className="flex flex-1 min-h-0 overflow-hidden border rounded-xl m-3" style={{ borderColor: "var(--border-color)" }}>
 				{/* Palette strips */}
 				<div className="cp-strips-panel">
-					<div className="cp-strips-stack">
-						{strips.map((s, i) => {
-							const textColor = contrastTextColor(s.color);
-							const isActive = selectedIdx === i;
-							return (
-								<button
-									key={`${s.key}-${i}`}
-									type="button"
-									className={`cp-strip ${isActive ? "cp-strip--active" : ""}`}
-									style={{ background: s.color, color: textColor }}
-									onClick={() => setSelectedIdx(i)}
+					<div className={`cp-palette-layout ${!previewOpen ? "cp-palette-layout--single" : ""}`}>
+						<div className="cp-palette-card">
+							<div className="cp-palette-card-header">
+								<div className="cp-palette-header-row">
+									<h3 className="cp-palette-title">Palette</h3>
+									<button
+										type="button"
+										className="toolbar-btn compact"
+										onClick={() => setPreviewOpen((v) => !v)}
+										data-tooltip={previewOpen ? "Hide preview" : "Show preview"}
+									>
+										{previewOpen ? <EyeOff size={14} /> : <Eye size={14} />}
+									</button>
+								</div>
+								<span className="cp-palette-subtitle">{paletteName || "Untitled Palette"}</span>
+							</div>
+							<div className="cp-strips-stack">
+								{strips.map((s, i) => {
+									const textColor = contrastTextColor(s.color);
+									const isActive = selectedIdx === i;
+									const isDragging = dragIdx === i;
+									const isDropTarget = dragOverIdx === i && dragIdx !== i;
+									return (
+										<button
+											key={`${s.key}-${i}`}
+											type="button"
+											className={`cp-strip ${isActive ? "cp-strip--active" : ""} ${isDragging ? "cp-strip--dragging" : ""} ${isDropTarget ? "cp-strip--drop-target" : ""}`}
+											style={{ background: s.color, color: textColor }}
+											onClick={() => setSelectedIdx(i)}
+											draggable
+											onDragStart={(e) => {
+												e.dataTransfer.effectAllowed = "move";
+												e.dataTransfer.setData("text/plain", String(i));
+												setDragIdx(i);
+											}}
+											onDragOver={(e) => {
+												e.preventDefault();
+												setDragOverIdx(i);
+											}}
+											onDrop={(e) => {
+												e.preventDefault();
+												handleStripDrop(dragIdx, i);
+												setDragIdx(null);
+												setDragOverIdx(null);
+											}}
+											onDragEnd={() => {
+												setDragIdx(null);
+												setDragOverIdx(null);
+											}}
+										>
+											<span className="cp-strip-grip" aria-hidden="true">
+												<GripVertical size={14} />
+											</span>
+											<span className="cp-strip-label">{s.label}</span>
+											<span className="cp-strip-hex">{s.color}</span>
+										</button>
+									);
+								})}
+							</div>
+						</div>
+						{previewOpen && (
+							<div className="cp-app-preview">
+								<div className="cp-app-preview-header">
+									<span className="cp-app-preview-title">Preview Mode</span>
+								</div>
+								<div
+									className="cp-app-frame"
+									style={{
+										background: getPreviewColor(["bg", "background"], "#0E090D"),
+										color: getPreviewColor(["text"], "#FFFFFF"),
+									}}
 								>
-									<span className="cp-strip-label">{s.label}</span>
-									<span className="cp-strip-hex">{s.color}</span>
-								</button>
-							);
-						})}
+									<div
+										className="cp-app-topbar"
+										style={{
+											background: getPreviewColor(["surface"], "#1D171E"),
+											borderColor: getPreviewColor(["border"], "#28202D"),
+										}}
+									>
+										<div className="cp-app-brand">{paletteName || "App Preview"}</div>
+										<div className="cp-app-dots">
+											<span style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+											<span style={{ background: getPreviewColor(["accent"], "#AEB784") }} />
+											<span style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+										</div>
+									</div>
+									<div className="cp-app-body">
+										<aside
+											className="cp-app-sidebar"
+											style={{
+												background: getPreviewColor(["surface"], "#1D171E"),
+												borderColor: getPreviewColor(["border"], "#28202D"),
+											}}
+										>
+											<div className="cp-app-skeleton cp-app-skeleton--title" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+											<div className="cp-app-skeleton" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+											<div className="cp-app-skeleton" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+											<div className="cp-app-skeleton cp-app-skeleton--short" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+										</aside>
+										<main className="cp-app-main">
+											<div
+												className="cp-app-card"
+												style={{
+													background: getPreviewColor(["surface"], "#1D171E"),
+													borderColor: getPreviewColor(["border"], "#28202D"),
+												}}
+											>
+												<div className="cp-app-skeleton cp-app-skeleton--heading" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+												<div className="cp-app-skeleton" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+												<div className="cp-app-skeleton cp-app-skeleton--short" style={{ background: getPreviewColor(["muted"], "#F4F6FB") }} />
+												<button
+													type="button"
+													className="cp-app-cta"
+													style={{ background: getPreviewColor(["accent"], "#AEB784"), color: contrastTextColor(getPreviewColor(["accent"], "#AEB784")) }}
+												>
+													Action
+												</button>
+											</div>
+										</main>
+									</div>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -360,7 +499,7 @@ const ColorPaletteStudio = () => {
 							<div className="cp-json-editor">
 								<CodeMirror
 									value={paletteJson}
-									height="180px"
+									height="216px"
 									readOnly
 									extensions={extensions}
 									basicSetup={{ lineNumbers: true, foldGutter: true }}
