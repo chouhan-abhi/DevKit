@@ -70,6 +70,87 @@ function parsePaletteConfigJson(input) {
 	return { nextStrips, nextName };
 }
 
+function downloadBlob(blob, fileName) {
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = fileName;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
+function inlineComputedStyles(sourceNode, targetNode) {
+	const computedStyle = window.getComputedStyle(sourceNode);
+	for (const prop of computedStyle) {
+		targetNode.style.setProperty(prop, computedStyle.getPropertyValue(prop), computedStyle.getPropertyPriority(prop));
+	}
+
+	if (sourceNode instanceof HTMLInputElement || sourceNode instanceof HTMLTextAreaElement) {
+		targetNode.setAttribute("value", sourceNode.value);
+	}
+
+	const sourceChildren = Array.from(sourceNode.children);
+	const targetChildren = Array.from(targetNode.children);
+	sourceChildren.forEach((sourceChild, idx) => {
+		const targetChild = targetChildren[idx];
+		if (targetChild) inlineComputedStyles(sourceChild, targetChild);
+	});
+}
+
+async function exportElementToPng(element, canvas, fileName) {
+	const bounds = element.getBoundingClientRect();
+	const width = Math.ceil(bounds.width);
+	const height = Math.ceil(bounds.height);
+	if (width <= 0 || height <= 0) throw new Error("Element has no renderable size");
+
+	const cloned = element.cloneNode(true);
+	inlineComputedStyles(element, cloned);
+	cloned.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+	cloned.style.width = `${width}px`;
+	cloned.style.height = `${height}px`;
+	cloned.style.margin = "0";
+
+	const serialized = new XMLSerializer().serializeToString(cloned);
+	const svg = `
+		<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+			<foreignObject x="0" y="0" width="100%" height="100%">
+				${serialized}
+			</foreignObject>
+		</svg>
+	`;
+	const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+	const svgUrl = URL.createObjectURL(svgBlob);
+
+	const img = await new Promise((resolve, reject) => {
+		const image = new Image();
+		image.onload = () => resolve(image);
+		image.onerror = () => reject(new Error("Failed to render element"));
+		image.src = svgUrl;
+	});
+	URL.revokeObjectURL(svgUrl);
+
+	const dpr = window.devicePixelRatio || 1;
+	canvas.width = Math.max(1, Math.floor(width * dpr));
+	canvas.height = Math.max(1, Math.floor(height * dpr));
+	const ctx = canvas.getContext("2d");
+	if (!ctx) throw new Error("Canvas context unavailable");
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.scale(dpr, dpr);
+	ctx.drawImage(img, 0, 0, width, height);
+
+	const pngBlob = await new Promise((resolve, reject) => {
+		canvas.toBlob((blob) => {
+			if (!blob) reject(new Error("Failed to generate PNG"));
+			else resolve(blob);
+		}, "image/png");
+	});
+
+	downloadBlob(pngBlob, fileName);
+}
+
 function HslSliders({ hsl, onChange }) {
 	const [h, s, l] = hsl;
 	const sliders = [
@@ -166,6 +247,7 @@ const ColorPaletteStudio = () => {
 	const [jsonError, setJsonError] = useState("");
 	const [editingJson, setEditingJson] = useState(false);
 	const canvasRef = useRef(null);
+	const paletteCardRef = useRef(null);
 
 	const selected = strips[selectedIdx] ?? strips[0];
 	const selectedHsl = useMemo(() => hexToHsl(selected.color), [selected.color]);
@@ -281,14 +363,29 @@ const ColorPaletteStudio = () => {
 		URL.revokeObjectURL(url);
 	}, [paletteJson, paletteName]);
 
-	const handleExportPng = useCallback(() => {
+	const handleExportPng = useCallback(async () => {
+		const fileName = `${paletteName.replace(/\s+/g, "-").toLowerCase() || "palette"}.png`;
+		const canvas = canvasRef.current || document.createElement("canvas");
+		if (paletteCardRef.current) {
+			try {
+				await exportElementToPng(paletteCardRef.current, canvas, fileName);
+				showToast("Palette card exported");
+				return;
+			} catch {
+				// fallback below
+			}
+		}
+
 		const stripH = 80;
 		const width = 600;
 		const height = strips.length * stripH;
-		const canvas = canvasRef.current || document.createElement("canvas");
 		canvas.width = width;
 		canvas.height = height;
 		const ctx = canvas.getContext("2d");
+		if (!ctx) {
+			showToast("Failed to export PNG");
+			return;
+		}
 
 		strips.forEach((s, i) => {
 			const y = i * stripH;
@@ -306,17 +403,14 @@ const ColorPaletteStudio = () => {
 		});
 
 		canvas.toBlob((blob) => {
-			if (!blob) return;
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = `${paletteName.replace(/\s+/g, "-").toLowerCase() || "palette"}.png`;
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			URL.revokeObjectURL(url);
+			if (!blob) {
+				showToast("Failed to export PNG");
+				return;
+			}
+			downloadBlob(blob, fileName);
+			showToast("Palette PNG exported");
 		}, "image/png");
-	}, [strips, paletteName]);
+	}, [paletteName, strips, showToast]);
 
 	const resetPalette = useCallback(() => {
 		setStrips(DEFAULT_STRIPS);
@@ -376,7 +470,7 @@ const ColorPaletteStudio = () => {
 				{/* Palette strips */}
 				<div className="cp-strips-panel">
 					<div className={`cp-palette-layout ${!previewOpen ? "cp-palette-layout--single" : ""}`}>
-						<div className="cp-palette-card">
+						<div ref={paletteCardRef} className="cp-palette-card shadow-md">
 							<div className="cp-palette-card-header">
 								<div className="cp-palette-header-row">
 									<h3 className="cp-palette-title">Palette</h3>

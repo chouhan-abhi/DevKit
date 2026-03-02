@@ -28,6 +28,40 @@ const getDateString = (daysAgo) => {
   return date.toISOString().split("T")[0];
 };
 
+const getGitHubSearchUrl = (query) => {
+  const endpoint = `/search/repositories?sort=stars&order=desc&q=${encodeURIComponent(query)}&per_page=30`;
+  if (import.meta.env.DEV) return `/api/github${endpoint}`;
+  return `https://api.github.com${endpoint}`;
+};
+
+const getGitHubProxyUrl = (query) => {
+  const directUrl = `https://api.github.com/search/repositories?sort=stars&order=desc&q=${encodeURIComponent(query)}&per_page=30`;
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
+};
+
+const buildGitHubHeaders = () => {
+  const token = storage.get("github-trending:token", "")?.trim();
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+};
+
+const parseGitHubError = async (response) => {
+  const errorData = await response.json().catch(() => ({}));
+  if (response.status === 403) {
+    const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
+    if (rateLimitRemaining === "0") {
+      return "GitHub API rate limit exceeded. Add a GitHub token in local storage key \"github-trending:token\" or try again later.";
+    }
+    return errorData?.message || "GitHub blocked the request temporarily (403).";
+  }
+  if (response.status === 429) return "GitHub API rate limit exceeded (429). Please retry later.";
+  return `Failed to fetch repositories: ${errorData?.message || response.statusText}`;
+};
+
 const fetchTrendingRepos = async ({ language, dateRange, searchQuery }) => {
   const queryParts = ["stars:>10"];
   if (language && language !== "All Languages") {
@@ -41,14 +75,22 @@ const fetchTrendingRepos = async ({ language, dateRange, searchQuery }) => {
     queryParts.push(`${searchQuery.trim()} in:name,description`);
   }
   const query = queryParts.join(" ");
-  const url = `https://api.github.com/search/repositories?sort=stars&order=desc&q=${encodeURIComponent(query)}&per_page=30`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    if (response.status === 403) throw new Error("GitHub API rate limit exceeded. Please try again later.");
-    throw new Error(`Failed to fetch repositories: ${errorData?.message || response.statusText}`);
+  const headers = buildGitHubHeaders();
+
+  try {
+    const response = await fetch(getGitHubSearchUrl(query), { headers });
+    if (!response.ok) throw new Error(await parseGitHubError(response));
+    return response.json();
+  } catch (err) {
+    const isLikelyNetworkOrCors = err instanceof TypeError || /Failed to fetch|NetworkError|blocked/i.test(String(err?.message || err));
+    if (!isLikelyNetworkOrCors) throw err;
+
+    const proxyResponse = await fetch(getGitHubProxyUrl(query));
+    if (!proxyResponse.ok) {
+      throw new Error("GitHub API call was blocked in this environment. Use a proxy/backend or add a token for higher limits.");
+    }
+    return proxyResponse.json();
   }
-  return response.json();
 };
 
 const formatNumber = (num) => num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num.toString();
@@ -142,9 +184,16 @@ export default function GitHubTrending() {
               <label htmlFor="gh-date" className="flex items-center gap-2 mb-1.5 text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
                 <Calendar size={13} /> Date Range
               </label>
-              <select id="gh-date" value={selectedDateRange} onChange={(e) => setSelectedDateRange(Number(e.target.value))}
+              <select
+                id="gh-date"
+                value={selectedDateRange === null ? "all" : String(selectedDateRange)}
+                onChange={(e) => setSelectedDateRange(e.target.value === "all" ? null : Number(e.target.value))}
                 className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
-                {DATE_RANGES.map((range) => <option key={range.value || "all"} value={range.value || ""}>{range.label}</option>)}
+                {DATE_RANGES.map((range) => (
+                  <option key={range.value ?? "all"} value={range.value === null ? "all" : String(range.value)}>
+                    {range.label}
+                  </option>
+                ))}
               </select>
             </div>
 
