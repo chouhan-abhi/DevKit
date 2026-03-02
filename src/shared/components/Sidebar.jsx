@@ -139,12 +139,6 @@ export default function Sidebar({ sidebarApps, homeTool, pathname, expanded, onT
 					</div>
 				)}
 			</aside>
-
-			<MobileBottomBar
-				sidebarApps={sidebarApps}
-				homeTool={homeTool}
-				pathname={pathname}
-			/>
 		</>
 	);
 }
@@ -160,54 +154,5 @@ function SidebarIcon({ iconName, isActive }) {
 		>
 			<Icon size={18} strokeWidth={1.8} />
 		</span>
-	);
-}
-
-function MobileBottomBar({ sidebarApps, homeTool, pathname }) {
-	const isHome = pathname === "/";
-
-	return (
-		<nav
-			className="fixed bottom-0 left-0 right-0 h-14 flex md:hidden items-center justify-around border-t z-40"
-			style={{
-				background: "var(--sidebar-bg)",
-				borderColor: "var(--border-color)",
-			}}
-			aria-label="Mobile navigation"
-		>
-			{homeTool && (
-				<Link to="/" aria-label="Home">
-					<MobileNavIcon iconName={homeTool.icon} isActive={isHome} />
-				</Link>
-			)}
-			{sidebarApps
-				.filter((t) => t.key !== "settings")
-				.slice(0, 5)
-				.map((tool) => (
-					<Link key={tool.key} to={tool.route} aria-label={tool.label}>
-						<MobileNavIcon iconName={tool.icon} isActive={pathname === tool.route} />
-					</Link>
-				))}
-			<Link to="/settings" aria-label="Settings">
-				<MobileNavIcon iconName="Settings" isActive={pathname === "/settings"} />
-			</Link>
-		</nav>
-	);
-}
-
-function MobileNavIcon({ iconName, isActive }) {
-	const Icon = iconName ? Lucide[iconName] : null;
-	if (!Icon) return null;
-
-	return (
-		<div
-			className="w-9 h-9 flex items-center justify-center rounded-lg"
-			style={{
-				color: isActive ? "var(--primary-color)" : "var(--sidebar-icon-text)",
-				background: isActive ? "rgba(0, 82, 204, 0.08)" : "transparent",
-			}}
-		>
-			<Icon size={20} strokeWidth={1.8} />
-		</div>
 	);
 }

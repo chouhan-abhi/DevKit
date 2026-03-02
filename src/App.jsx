@@ -51,17 +51,19 @@ function App() {
 						Skip to content
 					</a>
 
-					<Sidebar
-						sidebarApps={sidebarApps}
-						homeTool={homeTool}
-						pathname={pathname}
-						expanded={sidebarExpanded}
-						onToggle={toggleSidebar}
-					/>
+					<div className="hidden md:block">
+						<Sidebar
+							sidebarApps={sidebarApps}
+							homeTool={homeTool}
+							pathname={pathname}
+							expanded={sidebarExpanded}
+							onToggle={toggleSidebar}
+						/>
+					</div>
 
 					<main
 						id="main-content"
-						className="app-main flex-1 min-h-0 overflow-y-auto pb-14 md:pb-0 flex flex-col"
+						className="app-main flex-1 min-h-0 overflow-y-auto pb-0 flex flex-col"
 						style={{ "--sidebar-w": `${sidebarWidth}px` }}
 						role="main"
 					>

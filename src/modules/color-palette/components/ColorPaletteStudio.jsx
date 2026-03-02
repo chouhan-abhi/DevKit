@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
 	Copy, Check, Download, Image, Plus, Trash2, RotateCcw, GripVertical, Eye, EyeOff,
 } from "lucide-react";
@@ -18,6 +18,57 @@ const DEFAULT_STRIPS = [
 	{ key: "muted", label: "Muted", color: "#F4F6FB" },
 	{ key: "accent", label: "Accent", color: "#AEB784" },
 ];
+
+function normalizeHex(value) {
+	if (typeof value !== "string") return null;
+	const raw = value.trim();
+	const withHash = raw.startsWith("#") ? raw : `#${raw}`;
+	if (!isValidHex(withHash)) return null;
+	if (withHash.length === 4) {
+		return `#${withHash[1]}${withHash[1]}${withHash[2]}${withHash[2]}${withHash[3]}${withHash[3]}`.toUpperCase();
+	}
+	return withHash.toUpperCase();
+}
+
+function parsePaletteConfigJson(input) {
+	let parsed;
+	try {
+		parsed = JSON.parse(input);
+	} catch {
+		throw new Error("Invalid JSON format");
+	}
+
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		throw new Error("Config must be a JSON object");
+	}
+
+	const colorPalette = parsed["color-palette"];
+	if (!colorPalette || typeof colorPalette !== "object" || Array.isArray(colorPalette)) {
+		throw new Error('Missing "color-palette" object');
+	}
+
+	const nextStrips = Object.entries(colorPalette).reduce((acc, [key, value]) => {
+		if (typeof key !== "string" || !key.trim()) return acc;
+		const hex = normalizeHex(value);
+		if (!hex) return acc;
+		acc.push({
+			key,
+			label: key.charAt(0).toUpperCase() + key.slice(1),
+			color: hex,
+		});
+		return acc;
+	}, []);
+
+	if (nextStrips.length === 0) {
+		throw new Error("No valid colors found in color-palette");
+	}
+
+	const nextName = typeof parsed["palette-name"] === "string" && parsed["palette-name"].trim()
+		? parsed["palette-name"]
+		: "My Palette";
+
+	return { nextStrips, nextName };
+}
 
 function HslSliders({ hsl, onChange }) {
 	const [h, s, l] = hsl;
@@ -111,6 +162,9 @@ const ColorPaletteStudio = () => {
 	const [previewOpen, setPreviewOpen] = useState(true);
 	const [dragIdx, setDragIdx] = useState(null);
 	const [dragOverIdx, setDragOverIdx] = useState(null);
+	const [jsonDraft, setJsonDraft] = useState("");
+	const [jsonError, setJsonError] = useState("");
+	const [editingJson, setEditingJson] = useState(false);
 	const canvasRef = useRef(null);
 
 	const selected = strips[selectedIdx] ?? strips[0];
@@ -142,6 +196,10 @@ const ColorPaletteStudio = () => {
 
 	const paletteJson = useMemo(() => JSON.stringify(paletteConfig, null, 2), [paletteConfig]);
 	const extensions = useMemo(() => [jsonLang()], []);
+
+	useEffect(() => {
+		if (!editingJson) setJsonDraft(paletteJson);
+	}, [paletteJson, editingJson]);
 
 	const updateStripColor = useCallback((idx, color) => {
 		setStrips((prev) => prev.map((s, i) => i === idx ? { ...s, color } : s));
@@ -184,6 +242,22 @@ const ColorPaletteStudio = () => {
 			await navigator.clipboard.writeText(hex);
 			showToast(`Copied ${hex}`);
 		} catch { /* */ }
+	}, [showToast]);
+
+	const applyPaletteJson = useCallback((rawJson, showSuccess = false) => {
+		try {
+			const { nextStrips, nextName } = parsePaletteConfigJson(rawJson);
+			setStrips(nextStrips);
+			setPaletteName(nextName);
+			setSelectedIdx((prev) => Math.min(prev, nextStrips.length - 1));
+			setJsonError("");
+			if (showSuccess) showToast("Palette config applied");
+			return true;
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Invalid palette config";
+			setJsonError(message);
+			return false;
+		}
 	}, [showToast]);
 
 	const handleCopyJson = useCallback(async () => {
@@ -250,6 +324,11 @@ const ColorPaletteStudio = () => {
 		setPaletteName("My Palette");
 	}, []);
 
+	const handleJsonEditorChange = useCallback((value) => {
+		setJsonDraft(value);
+		applyPaletteJson(value, false);
+	}, [applyPaletteJson]);
+
 	const shortcuts = useMemo(() => ({
 		copyJson: { mod: true, shift: true, key: "c" },
 		exportJson: { mod: true, shift: true, key: "e" },
@@ -293,7 +372,7 @@ const ColorPaletteStudio = () => {
 				</div>
 			</div>
 
-			<div className="flex flex-1 min-h-0 overflow-hidden border rounded-xl m-3" style={{ borderColor: "var(--border-color)" }}>
+			<div className="cp-studio-shell flex flex-1 min-h-0 overflow-hidden border rounded-xl m-3" style={{ borderColor: "var(--border-color)" }}>
 				{/* Palette strips */}
 				<div className="cp-strips-panel">
 					<div className={`cp-palette-layout ${!previewOpen ? "cp-palette-layout--single" : ""}`}>
@@ -482,30 +561,43 @@ const ColorPaletteStudio = () => {
 					</div>
 
 					<div className="cp-tools-section cp-tools-section--json">
-						<button
-							type="button" className="cp-section-title cp-section-title--toggle"
-							onClick={() => setJsonOpen((v) => !v)}
-						>
-							JSON Config
+						<div className="cp-section-title-row">
 							<button
-								type="button" className="toolbar-btn compact" style={{ marginLeft: "auto" }}
+								type="button"
+								className="cp-section-title cp-section-title--toggle"
+								onClick={() => setJsonOpen((v) => !v)}
+							>
+								JSON Config
+							</button>
+							<button
+								type="button" className="toolbar-btn compact"
 								onClick={(e) => { e.stopPropagation(); handleSwatchCopy(paletteJson); }}
 								data-tooltip="Copy JSON"
 							>
 								<Copy size={12} />
 							</button>
-						</button>
+							<button
+								type="button" className="toolbar-btn compact"
+								onClick={() => applyPaletteJson(jsonDraft, true)}
+								data-tooltip="Apply pasted config"
+							>
+								<Check size={12} />
+							</button>
+						</div>
 						{jsonOpen && (
 							<div className="cp-json-editor">
 								<CodeMirror
-									value={paletteJson}
+									value={jsonDraft}
 									height="216px"
-									readOnly
 									extensions={extensions}
 									basicSetup={{ lineNumbers: true, foldGutter: true }}
+									onChange={handleJsonEditorChange}
+									onFocus={() => setEditingJson(true)}
+									onBlur={() => setEditingJson(false)}
 								/>
 							</div>
 						)}
+						{jsonError && <div className="cp-json-error">{jsonError}</div>}
 					</div>
 				</aside>
 			</div>

@@ -1383,8 +1383,6 @@ body {
 .cp-strips-stack {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px;
 }
 .cp-strip {
   display: flex;
@@ -1396,9 +1394,7 @@ body {
   cursor: pointer;
   min-height: 48px;
   transition: outline 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-  outline: 2px solid transparent;
   outline-offset: 0;
-  border-radius: var(--radius-sm);
   position: relative;
 }
 .cp-strip--active { outline-color: var(--primary-color); z-index: 1; }
@@ -1535,6 +1531,11 @@ body {
 }
 .cp-tools-section:last-child { border-bottom: none; }
 .cp-tools-section--json { flex: 1; min-height: 0; }
+.cp-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .cp-tools-header {
   display: flex;
@@ -1694,14 +1695,47 @@ body {
   overflow: hidden;
   margin-top: 6px;
 }
+.cp-json-error {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--accent-red);
+}
 
 @media (max-width: 768px) {
+  .cp-toolbar {
+    flex-wrap: wrap;
+    padding: 10px;
+    gap: 8px;
+  }
+  .cp-toolbar-left,
+  .cp-toolbar-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .cp-name-input {
+    width: 100%;
+    min-width: 0;
+  }
+  .cp-studio-shell {
+    flex-direction: column;
+    overflow: auto;
+    margin: 10px;
+  }
   .cp-strips-panel { padding: 10px; }
   .cp-palette-layout,
   .cp-palette-layout--single { grid-template-columns: 1fr; }
   .cp-app-body { flex-direction: column; }
   .cp-app-sidebar { width: 100%; border-right: none; border-bottom: 1px solid; }
-  .cp-tools { width: 100%; border-left: none; border-top: 1px solid var(--border-color); max-height: 50vh; }
+  .cp-tools {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    max-height: none;
+  }
+  .cp-tools-section--json {
+    flex: none;
+    min-height: 220px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════ */
@@ -1964,5 +1998,126 @@ body {
 @media (max-width: 900px) {
   .ck-encode-dual {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .ck-tab-bar {
+    overflow-x: auto;
+    padding: 0 8px;
+  }
+  .ck-tab {
+    white-space: nowrap;
+    padding: 10px 12px;
+  }
+
+  .ck-live-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .ck-live-info {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .ck-live-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .ck-info-banner {
+    align-items: flex-start;
+  }
+
+  .ck-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .ck-table thead {
+    display: none;
+  }
+  .ck-table,
+  .ck-table tbody,
+  .ck-table tr,
+  .ck-table td {
+    display: block;
+    width: 100%;
+  }
+  .ck-table tbody tr {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    margin: 0 8px 8px;
+    overflow: hidden;
+    background: var(--panel-color);
+  }
+  .ck-table tbody tr:last-child {
+    margin-bottom: 8px;
+  }
+  .ck-table td {
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 10px;
+  }
+  .ck-table tbody tr td:last-child {
+    border-bottom: none;
+  }
+  .ck-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .ck-cell-name,
+  .ck-cell-value {
+    max-width: 100%;
+    white-space: normal;
+  }
+  .ck-cell-actions {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .ck-cell-actions::before {
+    width: 100%;
+  }
+  .ck-value-text {
+    font-size: 11px;
+  }
+  .ck-table tr.ck-row-detail {
+    margin-top: -4px;
+    margin-bottom: 8px;
+  }
+  .ck-table tr.ck-row-detail td[colspan="3"] {
+    border: none;
+    padding: 0;
+  }
+  .ck-table tr.ck-row-detail td[colspan="3"]::before {
+    content: none;
+  }
+
+  .ck-form-grid,
+  .ck-craft-grid {
+    grid-template-columns: 1fr;
+  }
+  .ck-field--inline {
+    padding-top: 0;
+  }
+  .ck-form-actions {
+    flex-wrap: wrap;
+  }
+
+  .ck-craft-result {
+    flex-direction: column;
+  }
+  .ck-craft-result-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ck-parsed-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 }

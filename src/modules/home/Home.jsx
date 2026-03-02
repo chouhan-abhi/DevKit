@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Lucide from "lucide-react";
-import { Clock, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight, PocketKnife } from "lucide-react";
 import { getToolCards, getToolById } from "../../app/registry";
 import { documentStore } from "../../shared/services/DocumentStore";
 import AppCard from "../../shared/components/AppCard";

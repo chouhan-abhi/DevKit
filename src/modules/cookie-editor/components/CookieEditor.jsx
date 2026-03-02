@@ -242,11 +242,11 @@ function CookieRow({ cookie, isEditing, isDecoding, onEdit, onCancelEdit, onSave
 	return (
 		<>
 			<tr className={isEditing ? "ck-row--editing" : ""}>
-				<td className="ck-cell-name">{cookie.name}</td>
-				<td className="ck-cell-value">
+				<td className="ck-cell-name" data-label="Name">{cookie.name}</td>
+				<td className="ck-cell-value" data-label="Value">
 					<span className="ck-value-text">{cookie.value.length > 60 ? `${cookie.value.slice(0, 60)}…` : cookie.value}</span>
 				</td>
-				<td className="ck-cell-actions">
+				<td className="ck-cell-actions" data-label="Actions">
 					<button type="button" className="toolbar-btn compact" onClick={onEdit} data-tooltip="Edit"><Pencil size={13} /></button>
 					<button type="button" className="toolbar-btn compact" onClick={onToggleDecode} data-tooltip="Decode"><Eye size={13} /></button>
 					<button type="button" className="toolbar-btn compact" onClick={onCopy} data-tooltip="Copy"><Copy size={13} /></button>
@@ -254,10 +254,10 @@ function CookieRow({ cookie, isEditing, isDecoding, onEdit, onCancelEdit, onSave
 				</td>
 			</tr>
 			{isDecoding && (
-				<tr><td colSpan={3}><DecodedView value={cookie.value} /></td></tr>
+				<tr className="ck-row-detail"><td colSpan={3}><DecodedView value={cookie.value} /></td></tr>
 			)}
 			{isEditing && (
-				<tr><td colSpan={3}><CookieForm initial={{ ...EMPTY_FORM, name: cookie.name, value: cookie.value }} onSave={onSave} onCancel={onCancelEdit} /></td></tr>
+				<tr className="ck-row-detail"><td colSpan={3}><CookieForm initial={{ ...EMPTY_FORM, name: cookie.name, value: cookie.value }} onSave={onSave} onCancel={onCancelEdit} /></td></tr>
 			)}
 		</>
 	);
