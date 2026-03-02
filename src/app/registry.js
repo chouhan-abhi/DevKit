@@ -9,7 +9,7 @@ import { manifest as mermaid } from "../modules/mermaid/manifest";
 import { manifest as svgEditor } from "../modules/svg-editor/manifest";
 import { manifest as colorPalette } from "../modules/color-palette/manifest";
 import { manifest as cookieEditor } from "../modules/cookie-editor/manifest";
-import { manifest as githubTrending } from "../modules/github-trending/manifest";
+// import { manifest as githubTrending } from "../modules/github-trending/manifest";
 import { manifest as settings } from "../modules/settings/manifest";
 
 export const CATEGORY_LABELS = {
@@ -30,7 +30,7 @@ export const tools = [
 	svgEditor,
 	colorPalette,
 	cookieEditor,
-	githubTrending,
+	// githubTrending,
 	settings,
 ];
 

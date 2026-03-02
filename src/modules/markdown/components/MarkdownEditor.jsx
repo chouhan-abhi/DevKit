@@ -466,28 +466,27 @@ const MarkdownEditor = () => {
 					</div>
 				)}
 
+				{showToc && (
+					<TableOfContents
+						headings={headings}
+						activeId={activeHeadingId}
+						onNavigate={scrollToHeading}
+					/>
+				)}
+
 				<div
 					ref={previewScrollRef}
 					className={`overflow-auto ${previewMode ? "w-full" : "w-1/2"}`}
 					style={{ background: "var(--panel-color)" }}
 				>
-					<div className={previewMode ? "md-preview-layout" : ""}>
-						{showToc && (
-							<TableOfContents
-								headings={headings}
-								activeId={activeHeadingId}
-								onNavigate={scrollToHeading}
-							/>
-						)}
-						<div className={`markdown-preview ${previewMode ? "md-preview-full" : ""}`}>
-							<ReactMarkdown
-								remarkPlugins={remarkPlugins}
-								rehypePlugins={rehypePlugins}
-								components={markdownComponents}
-							>
-								{markdownText}
-							</ReactMarkdown>
-						</div>
+					<div className={`markdown-preview ${previewMode ? "md-preview-full" : ""}`}>
+						<ReactMarkdown
+							remarkPlugins={remarkPlugins}
+							rehypePlugins={rehypePlugins}
+							components={markdownComponents}
+						>
+							{markdownText}
+						</ReactMarkdown>
 					</div>
 				</div>
 			</div>
