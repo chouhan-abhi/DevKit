@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Eye, Edit, Copy, Check, Sparkles, Download, Upload, Link2, Link, List } from "lucide-react";
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
+import { Eye, Edit, Copy, Check, Sparkles, Download, Upload, Link2, Link, List, Presentation } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown as markdownLang } from "@codemirror/lang-markdown";
 import LZString from "lz-string";
@@ -11,6 +11,9 @@ import SubAppToolbar from "../../../shared/components/SubAppToolbar";
 import { useDocuments } from "../../../shared/hooks/useDocuments";
 import { useToast } from "../../../shared/components/ToastProvider";
 import { useKeyboardShortcuts, formatShortcut } from "../../../shared/hooks/useKeyboardShortcuts";
+import { parseSlides } from "../utils/slideUtils";
+
+const SlidePresenter = lazy(() => import("./SlidePresenter"));
 
 function slugify(text) {
 	return text
@@ -209,7 +212,7 @@ const MarkdownEditor = () => {
 		meta: { language: "markdown" },
 	});
 
-	const [previewMode, setPreviewMode] = useState(false);
+	const [viewMode, setViewMode] = useState("edit");
 	const [tocOpen, setTocOpen] = useState(true);
 	const [copied, setCopied] = useState(false);
 	const [shared, setShared] = useState(false);
@@ -217,6 +220,11 @@ const MarkdownEditor = () => {
 	const markdownText = content?.markdown ?? "";
 	const sharedHandledRef = useRef(false);
 	const previewScrollRef = useRef(null);
+	const prevModeRef = useRef("edit");
+
+	const isPreview = viewMode === "preview";
+	const isPresent = viewMode === "present";
+	const isEdit = viewMode === "edit";
 
 	const resolveTheme = (theme) => {
 		const resolved = theme === "system"
@@ -253,7 +261,7 @@ const MarkdownEditor = () => {
 			const nextTitle = payload?.title || "Shared Markdown";
 
 			createDoc(nextTitle, { markdown: nextMarkdown });
-			setPreviewMode(true);
+			setViewMode("preview");
 			sharedHandledRef.current = true;
 
 			const url = new URL(window.location.href);
@@ -313,16 +321,30 @@ const MarkdownEditor = () => {
 		setContent((prev) => ({ ...(prev || {}), markdown: cleaned.join("\n") }));
 	};
 
+	const togglePresent = useCallback(() => {
+		setViewMode((v) => {
+			if (v === "present") return prevModeRef.current;
+			prevModeRef.current = v;
+			return "present";
+		});
+	}, []);
+
+	const exitPresent = useCallback(() => {
+		setViewMode(prevModeRef.current);
+	}, []);
+
 	const extensions = useMemo(() => [markdownLang()], []);
 
 	const shortcuts = useMemo(() => ({
 		preview:  { mod: true, shift: true, key: "p" },
+		present:  { mod: true, shift: true, key: "s" },
 		format:   { mod: true, shift: true, key: "f" },
 		exportMd: { mod: true, shift: true, key: "e" },
 	}), []);
 
 	useKeyboardShortcuts([
-		{ shortcut: shortcuts.preview,  action: () => setPreviewMode((v) => !v) },
+		{ shortcut: shortcuts.preview,  action: () => setViewMode((v) => v === "edit" ? "preview" : "edit") },
+		{ shortcut: shortcuts.present,  action: togglePresent },
 		{ shortcut: shortcuts.format,   action: formatMarkdown },
 		{ shortcut: shortcuts.exportMd, action: handleExport },
 	]);
@@ -374,7 +396,9 @@ const MarkdownEditor = () => {
 	const headings = useMemo(() => parseHeadings(markdownText), [markdownText]);
 	const headingIds = useMemo(() => headings.map((h) => h.id), [headings]);
 	const activeHeadingId = useActiveHeading(headingIds, previewScrollRef);
-	const showToc = previewMode && tocOpen && headings.length > 0;
+	const showToc = isPreview && tocOpen && headings.length > 0;
+
+	const slides = useMemo(() => parseSlides(markdownText), [markdownText]);
 
 	const scrollToHeading = useCallback((id) => {
 		const root = previewScrollRef.current;
@@ -398,29 +422,33 @@ const MarkdownEditor = () => {
 					status={isSaving ? "saving" : "saved"}
 					rightActions={
 						<>
-							<button onClick={formatMarkdown} className="toolbar-btn compact" type="button" data-tooltip={`Format (${formatShortcut(shortcuts.format)})`} aria-label="Format">
-								<Sparkles size={14} />
-							</button>
-							<button onClick={handleCopy} className="toolbar-btn compact" type="button" data-tooltip={copied ? "Copied!" : "Copy"} aria-label="Copy">
-								{copied ? <Check size={14} /> : <Copy size={14} />}
-							</button>
-							<button onClick={handleExport} className="toolbar-btn compact" type="button" data-tooltip={`Export .md (${formatShortcut(shortcuts.exportMd)})`} aria-label="Export">
-								<Download size={14} />
-							</button>
-							<button onClick={handleShareUrl} className="toolbar-btn compact" type="button" data-tooltip={shared ? "Link copied!" : "Share URL"} aria-label="Share">
-								{shared ? <Check size={14} /> : <Link2 size={14} />}
-							</button>
-							<label className="toolbar-btn compact cursor-pointer" data-tooltip="Import file" aria-label="Import">
-								<Upload size={14} />
-								<input
-									type="file"
-									accept=".md,.markdown,text/markdown,text/plain"
-									onChange={handleImport}
-									className="hidden"
-								/>
-							</label>
+							{!isPresent && (
+								<>
+									<button onClick={formatMarkdown} className="toolbar-btn compact" type="button" data-tooltip={`Format (${formatShortcut(shortcuts.format)})`} aria-label="Format">
+										<Sparkles size={14} />
+									</button>
+									<button onClick={handleCopy} className="toolbar-btn compact" type="button" data-tooltip={copied ? "Copied!" : "Copy"} aria-label="Copy">
+										{copied ? <Check size={14} /> : <Copy size={14} />}
+									</button>
+									<button onClick={handleExport} className="toolbar-btn compact" type="button" data-tooltip={`Export .md (${formatShortcut(shortcuts.exportMd)})`} aria-label="Export">
+										<Download size={14} />
+									</button>
+									<button onClick={handleShareUrl} className="toolbar-btn compact" type="button" data-tooltip={shared ? "Link copied!" : "Share URL"} aria-label="Share">
+										{shared ? <Check size={14} /> : <Link2 size={14} />}
+									</button>
+									<label className="toolbar-btn compact cursor-pointer" data-tooltip="Import file" aria-label="Import">
+										<Upload size={14} />
+										<input
+											type="file"
+											accept=".md,.markdown,text/markdown,text/plain"
+											onChange={handleImport}
+											className="hidden"
+										/>
+									</label>
+								</>
+							)}
 							<div className="toolbar-divider" />
-							{previewMode && headings.length > 0 && (
+							{isPreview && headings.length > 0 && (
 								<button
 									onClick={() => setTocOpen((v) => !v)}
 									className={`toolbar-btn compact ${tocOpen ? "toolbar-btn--toggled" : ""}`}
@@ -431,65 +459,92 @@ const MarkdownEditor = () => {
 									<List size={14} />
 								</button>
 							)}
-							<button onClick={() => setPreviewMode(!previewMode)} className="toolbar-btn" type="button" data-tooltip={`${previewMode ? "Back to editor" : "Full preview"} (${formatShortcut(shortcuts.preview)})`}>
-								{previewMode ? <Edit size={14} /> : <Eye size={14} />}
-								{previewMode ? "Edit" : "Preview"}
+							<button
+								onClick={togglePresent}
+								className={`toolbar-btn compact ${isPresent ? "toolbar-btn--toggled" : ""}`}
+								type="button"
+								data-tooltip={`${isPresent ? "Exit presentation" : "Present"} (${formatShortcut(shortcuts.present)})`}
+								aria-label="Toggle presentation"
+							>
+								<Presentation size={14} />
 							</button>
+							{!isPresent && (
+								<button onClick={() => setViewMode((v) => v === "edit" ? "preview" : "edit")} className="toolbar-btn" type="button" data-tooltip={`${isPreview ? "Back to editor" : "Full preview"} (${formatShortcut(shortcuts.preview)})`}>
+									{isPreview ? <Edit size={14} /> : <Eye size={14} />}
+									{isPreview ? "Edit" : "Preview"}
+								</button>
+							)}
 						</>
 					}
 				/>
 			</div>
 
-			<div className="flex flex-1 min-h-0 overflow-hidden border rounded-xl m-3" style={{ borderColor: "var(--border-color)" }}>
-				{!previewMode && (
-					<div className="flex-1 min-h-0 overflow-auto border-r" style={{ borderColor: "var(--border-color)" }}>
-						<CodeMirror
-							value={markdownText}
-							height="100%"
-							theme={editorTheme}
-							extensions={extensions}
-							onChange={(value) =>
-								setContent((prev) => ({ ...(prev || {}), markdown: value ?? "" }))
-							}
-							basicSetup={{
-								lineNumbers: true,
-								foldGutter: true,
-								highlightActiveLineGutter: true,
-								highlightActiveLine: true,
-								bracketMatching: true,
-								closeBrackets: true,
-								autocompletion: true,
-								indentOnInput: true,
-							}}
-							className="h-full"
-						/>
+			{isPresent ? (
+				<Suspense fallback={
+					<div className="flex-1 flex items-center justify-center" style={{ color: "var(--text-muted)", fontSize: 14 }}>
+						Loading presenter\u2026
 					</div>
-				)}
-
-				{showToc && (
-					<TableOfContents
-						headings={headings}
-						activeId={activeHeadingId}
-						onNavigate={scrollToHeading}
+				}>
+					<SlidePresenter
+						slides={slides}
+						markdownComponents={markdownComponents}
+						remarkPlugins={remarkPlugins}
+						rehypePlugins={rehypePlugins}
+						onExit={exitPresent}
 					/>
-				)}
+				</Suspense>
+			) : (
+				<div className="flex flex-1 min-h-0 overflow-hidden border rounded-xl m-3" style={{ borderColor: "var(--border-color)" }}>
+					{isEdit && (
+						<div className="flex-1 min-h-0 overflow-auto border-r" style={{ borderColor: "var(--border-color)" }}>
+							<CodeMirror
+								value={markdownText}
+								height="100%"
+								theme={editorTheme}
+								extensions={extensions}
+								onChange={(value) =>
+									setContent((prev) => ({ ...(prev || {}), markdown: value ?? "" }))
+								}
+								basicSetup={{
+									lineNumbers: true,
+									foldGutter: true,
+									highlightActiveLineGutter: true,
+									highlightActiveLine: true,
+									bracketMatching: true,
+									closeBrackets: true,
+									autocompletion: true,
+									indentOnInput: true,
+								}}
+								className="h-full"
+							/>
+						</div>
+					)}
 
-				<div
-					ref={previewScrollRef}
-					className={`overflow-auto ${previewMode ? "w-full" : "w-1/2"}`}
-					style={{ background: "var(--panel-color)" }}
-				>
-					<div className={`markdown-preview ${previewMode ? "md-preview-full" : ""}`}>
-						<ReactMarkdown
-							remarkPlugins={remarkPlugins}
-							rehypePlugins={rehypePlugins}
-							components={markdownComponents}
-						>
-							{markdownText}
-						</ReactMarkdown>
+					{showToc && (
+						<TableOfContents
+							headings={headings}
+							activeId={activeHeadingId}
+							onNavigate={scrollToHeading}
+						/>
+					)}
+
+					<div
+						ref={previewScrollRef}
+						className={`overflow-auto ${isPreview ? "w-full" : "w-1/2"}`}
+						style={{ background: "var(--panel-color)" }}
+					>
+						<div className={`markdown-preview ${isPreview ? "md-preview-full" : ""}`}>
+							<ReactMarkdown
+								remarkPlugins={remarkPlugins}
+								rehypePlugins={rehypePlugins}
+								components={markdownComponents}
+							>
+								{markdownText}
+							</ReactMarkdown>
+						</div>
 					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 };
