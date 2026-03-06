@@ -336,6 +336,7 @@ const MarkdownEditor = () => {
 	const extensions = useMemo(() => [markdownLang()], []);
 
 	const shortcuts = useMemo(() => ({
+		newDoc:   { mod: true, shift: true, key: "n" },
 		preview:  { mod: true, shift: true, key: "p" },
 		present:  { mod: true, shift: true, key: "s" },
 		format:   { mod: true, shift: true, key: "f" },
@@ -343,6 +344,7 @@ const MarkdownEditor = () => {
 	}), []);
 
 	useKeyboardShortcuts([
+		{ shortcut: shortcuts.newDoc,   action: () => createDoc("Untitled Markdown", { markdown: initialMarkdown }) },
 		{ shortcut: shortcuts.preview,  action: () => setViewMode((v) => v === "edit" ? "preview" : "edit") },
 		{ shortcut: shortcuts.present,  action: togglePresent },
 		{ shortcut: shortcuts.format,   action: formatMarkdown },

@@ -124,8 +124,14 @@ export default function TodoList() {
 
   const totalCount = tasks.length;
 
+  const shortcuts = useMemo(() => ({
+    newDoc: { mod: true, shift: true, key: "n" },
+    addTask: { mod: true, shift: true, key: "a" },
+  }), []);
+
   useKeyboardShortcuts([
-    { shortcut: { mod: true, shift: true, key: "a" }, action: () => taskInputRef.current?.focus() },
+    { shortcut: shortcuts.newDoc, action: () => createDoc("Task Board", { tasks: [] }) },
+    { shortcut: shortcuts.addTask, action: () => taskInputRef.current?.focus() },
   ]);
 
   return (

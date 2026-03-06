@@ -263,12 +263,14 @@ const JsonEditor = () => {
 	const extensions = useMemo(() => [json()], []);
 
 	const shortcuts = useMemo(() => ({
+		newDoc: { mod: true, shift: true, key: "n" },
 		format: { mod: true, shift: true, key: "f" },
 		minify: { mod: true, shift: true, key: "m" },
 		copy:   { mod: true, shift: true, key: "c" },
 	}), []);
 
 	useKeyboardShortcuts([
+		{ shortcut: shortcuts.newDoc, action: () => createDoc("JSON Document", { jsonText: fallbackJson }) },
 		{ shortcut: shortcuts.format, action: formatJson },
 		{ shortcut: shortcuts.minify, action: minifyJson },
 		{ shortcut: shortcuts.copy, action: handleCopy },

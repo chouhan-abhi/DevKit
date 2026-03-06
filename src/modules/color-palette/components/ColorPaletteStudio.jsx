@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
-	Copy, Check, Download, Image, Plus, Trash2, RotateCcw, GripVertical, Eye, EyeOff,
+	Copy, Check, Download, Image as ImageIcon, Plus, Trash2, RotateCcw, GripVertical, Eye, EyeOff, Save, Shuffle,
 } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json as jsonLang } from "@codemirror/lang-json";
@@ -18,6 +18,117 @@ const DEFAULT_STRIPS = [
 	{ key: "muted", label: "Muted", color: "#F4F6FB" },
 	{ key: "accent", label: "Accent", color: "#AEB784" },
 ];
+
+const SAVED_PALETTES_STORAGE_KEY = "color-palette-studio.saved-palettes";
+const MAX_SAVED_PREVIEW = 3;
+
+const PALETTE_NAMES = {
+	dark: ["Midnight Grid", "Ink Signal", "Noir Console", "Deep Circuit"],
+	light: ["Cloud Canvas", "Dawn Slate", "Paper Bloom", "Soft Ledger"],
+};
+
+function clamp(value, min, max) {
+	return Math.min(max, Math.max(min, value));
+}
+
+function wrapHue(hue) {
+	const wrapped = hue % 360;
+	return wrapped < 0 ? wrapped + 360 : wrapped;
+}
+
+function stripLabelFromKey(key) {
+	if (typeof key !== "string" || !key.trim()) return "Color";
+	return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+function normalizeStrips(strips) {
+	if (!Array.isArray(strips)) return null;
+	const normalized = strips.reduce((acc, strip) => {
+		if (!strip || typeof strip !== "object") return acc;
+		const key = typeof strip.key === "string" && strip.key.trim() ? strip.key.trim() : "color";
+		const color = normalizeHex(strip.color);
+		if (!color) return acc;
+		acc.push({ key, label: stripLabelFromKey(key), color });
+		return acc;
+	}, []);
+	return normalized.length >= 2 ? normalized : null;
+}
+
+function createPaletteSignature(strips) {
+	return strips.map((strip) => `${strip.key}:${strip.color}`).join("|");
+}
+
+function buildRecommendedPalette(theme, index) {
+	const baseHue = Math.floor(Math.random() * 360);
+	const accentHue = wrapHue(baseHue + 35 + Math.floor(Math.random() * 45));
+	const isDark = theme === "dark";
+	const bg = hslToHex(baseHue, 26, isDark ? 10 : 97);
+	const surface = hslToHex(baseHue, 22, isDark ? 16 : 100);
+	const border = hslToHex(baseHue, 14, isDark ? 27 : 88);
+	const text = hslToHex(baseHue, 20, isDark ? 94 : 18);
+	const muted = hslToHex(wrapHue(baseHue + 8), 16, isDark ? 62 : 82);
+	const accent = hslToHex(
+		accentHue,
+		isDark ? clamp(64 + Math.floor(Math.random() * 14), 0, 100) : clamp(62 + Math.floor(Math.random() * 20), 0, 100),
+		isDark ? clamp(58 + Math.floor(Math.random() * 12), 0, 100) : clamp(46 + Math.floor(Math.random() * 10), 0, 100),
+	);
+
+	const names = PALETTE_NAMES[theme] || PALETTE_NAMES.dark;
+	const name = names[Math.floor(Math.random() * names.length)];
+
+	return {
+		id: `rec-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+		type: "recommended",
+		theme,
+		name,
+		strips: [
+			{ key: "bg", label: "Background", color: bg },
+			{ key: "surface", label: "Surface", color: surface },
+			{ key: "border", label: "Border", color: border },
+			{ key: "text", label: "Text", color: text },
+			{ key: "muted", label: "Muted", color: muted },
+			{ key: "accent", label: "Accent", color: accent },
+		],
+	};
+}
+
+function buildRecommendedSet() {
+	const themes = ["dark", "light", Math.random() > 0.5 ? "dark" : "light"];
+	return themes.map((theme, idx) => buildRecommendedPalette(theme, idx));
+}
+
+function loadSavedPalettes() {
+	try {
+		const raw = localStorage.getItem(SAVED_PALETTES_STORAGE_KEY);
+		if (!raw) return [];
+		const parsed = JSON.parse(raw);
+		if (!Array.isArray(parsed)) return [];
+		return parsed.reduce((acc, entry) => {
+			if (!entry || typeof entry !== "object") return acc;
+			const strips = normalizeStrips(entry.strips);
+			if (!strips) return acc;
+			const name = typeof entry.name === "string" && entry.name.trim() ? entry.name.trim() : "Saved Palette";
+			acc.push({
+				id: typeof entry.id === "string" && entry.id ? entry.id : `saved-${Date.now()}-${acc.length}`,
+				type: "saved",
+				name,
+				strips,
+				savedAt: typeof entry.savedAt === "string" ? entry.savedAt : new Date().toISOString(),
+			});
+			return acc;
+		}, []);
+	} catch {
+		return [];
+	}
+}
+
+function persistSavedPalettes(nextSavedPalettes) {
+	try {
+		localStorage.setItem(SAVED_PALETTES_STORAGE_KEY, JSON.stringify(nextSavedPalettes));
+	} catch {
+		// no-op
+	}
+}
 
 function normalizeHex(value) {
 	if (typeof value !== "string") return null;
@@ -246,6 +357,8 @@ const ColorPaletteStudio = () => {
 	const [jsonDraft, setJsonDraft] = useState("");
 	const [jsonError, setJsonError] = useState("");
 	const [editingJson, setEditingJson] = useState(false);
+	const [recommendedPalettes, setRecommendedPalettes] = useState(() => buildRecommendedSet());
+	const [savedPalettes, setSavedPalettes] = useState([]);
 	const canvasRef = useRef(null);
 	const paletteCardRef = useRef(null);
 
@@ -278,10 +391,22 @@ const ColorPaletteStudio = () => {
 
 	const paletteJson = useMemo(() => JSON.stringify(paletteConfig, null, 2), [paletteConfig]);
 	const extensions = useMemo(() => [jsonLang()], []);
+	const savedPaletteCards = useMemo(() => {
+		const trimmed = savedPalettes.slice(0, MAX_SAVED_PREVIEW);
+		const placeholders = Array.from({ length: Math.max(0, MAX_SAVED_PREVIEW - trimmed.length) }, (_, idx) => ({
+			id: `empty-saved-${idx}`,
+			type: "empty-saved",
+		}));
+		return [...trimmed, ...placeholders];
+	}, [savedPalettes]);
 
 	useEffect(() => {
 		if (!editingJson) setJsonDraft(paletteJson);
 	}, [paletteJson, editingJson]);
+
+	useEffect(() => {
+		setSavedPalettes(loadSavedPalettes());
+	}, []);
 
 	const updateStripColor = useCallback((idx, color) => {
 		setStrips((prev) => prev.map((s, i) => i === idx ? { ...s, color } : s));
@@ -350,6 +475,43 @@ const ColorPaletteStudio = () => {
 			setTimeout(() => setCopiedJson(false), 1500);
 		} catch { /* */ }
 	}, [paletteJson, showToast]);
+
+	const applyPaletteSnapshot = useCallback((palette) => {
+		const normalized = normalizeStrips(palette?.strips);
+		if (!normalized) return;
+		setStrips(normalized);
+		setPaletteName(typeof palette?.name === "string" && palette.name.trim() ? palette.name.trim() : "My Palette");
+		setSelectedIdx(0);
+		setJsonError("");
+	}, []);
+
+	const handleSaveCurrentPalette = useCallback(() => {
+		const snapshot = {
+			id: `saved-${Date.now()}`,
+			type: "saved",
+			name: (paletteName || "My Palette").trim() || "My Palette",
+			strips: strips.map((strip) => ({ ...strip })),
+			savedAt: new Date().toISOString(),
+		};
+		setSavedPalettes((prev) => {
+			const nextSignature = createPaletteSignature(snapshot.strips);
+			const filtered = prev.filter((item) => createPaletteSignature(item.strips) !== nextSignature);
+			const next = [snapshot, ...filtered].slice(0, 18);
+			persistSavedPalettes(next);
+			return next;
+		});
+		showToast("Palette saved");
+	}, [paletteName, strips, showToast]);
+
+	const handleRefreshRecommendations = useCallback(() => {
+		setRecommendedPalettes(buildRecommendedSet());
+		showToast("Recommendations refreshed");
+	}, [showToast]);
+
+	const handleApplyGalleryPalette = useCallback((palette) => {
+		applyPaletteSnapshot(palette);
+		showToast(`Applied ${palette.name || "palette"}`);
+	}, [applyPaletteSnapshot, showToast]);
 
 	const handleExportJson = useCallback(() => {
 		const blob = new Blob([paletteJson], { type: "application/json" });
@@ -424,11 +586,13 @@ const ColorPaletteStudio = () => {
 	}, [applyPaletteJson]);
 
 	const shortcuts = useMemo(() => ({
+		newDoc: { mod: true, shift: true, key: "n" },
 		copyJson: { mod: true, shift: true, key: "c" },
 		exportJson: { mod: true, shift: true, key: "e" },
 	}), []);
 
 	useKeyboardShortcuts([
+		{ shortcut: shortcuts.newDoc, action: resetPalette },
 		{ shortcut: shortcuts.copyJson, action: handleCopyJson },
 		{ shortcut: shortcuts.exportJson, action: handleExportJson },
 	]);
@@ -447,10 +611,13 @@ const ColorPaletteStudio = () => {
 					/>
 				</div>
 				<div className="cp-toolbar-right">
+					<button type="button" className="toolbar-btn compact" onClick={handleSaveCurrentPalette} data-tooltip="Save palette">
+						<Save size={14} />
+					</button>
 					<button type="button" className="toolbar-btn compact" onClick={addStrip} data-tooltip="Add strip">
 						<Plus size={14} />
 					</button>
-					<button type="button" className="toolbar-btn compact" onClick={resetPalette} data-tooltip="Reset palette">
+					<button type="button" className="toolbar-btn compact" onClick={resetPalette} data-tooltip={`Reset palette (${formatShortcut(shortcuts.newDoc)})`}>
 						<RotateCcw size={14} />
 					</button>
 					<div className="toolbar-divider" />
@@ -461,7 +628,7 @@ const ColorPaletteStudio = () => {
 						<Download size={14} />
 					</button>
 					<button type="button" className="toolbar-btn compact" onClick={handleExportPng} data-tooltip="Export PNG">
-						<Image size={14} />
+						<ImageIcon size={14} />
 					</button>
 				</div>
 			</div>
@@ -592,6 +759,108 @@ const ColorPaletteStudio = () => {
 								</div>
 							</div>
 						)}
+					</div>
+					<div
+						className="mt-3 rounded-md border p-3"
+						style={{
+							borderColor: "var(--border-color)",
+							background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
+						}}
+					>
+						<div className="mb-2.5 flex items-center justify-between gap-2.5">
+							<div>
+								<h4 className="m-0 text-[13px] font-bold" style={{ color: "var(--text-color)" }}>Palette Gallery</h4>
+								<span className="mt-0.5 block text-[11px]" style={{ color: "var(--text-muted)" }}>3 recommended + 3 saved</span>
+							</div>
+							<div className="flex items-center gap-1.5">
+								<button type="button" className="toolbar-btn compact" onClick={handleRefreshRecommendations} data-tooltip="Refresh recommended palettes">
+									<Shuffle size={13} />
+								</button>
+								<button type="button" className="toolbar-btn compact" onClick={handleSaveCurrentPalette} data-tooltip="Save current palette">
+									<Save size={13} />
+								</button>
+							</div>
+						</div>
+						<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+							{recommendedPalettes.map((palette) => (
+								<button
+									key={palette.id}
+									type="button"
+									className="flex min-h-[152px] flex-col items-start gap-2 rounded-md border p-3 text-left transition hover:-translate-y-px"
+									style={{
+										borderColor: "var(--border-color)",
+										background: "var(--header-bg)",
+										color: "var(--text-color)",
+									}}
+									onClick={() => handleApplyGalleryPalette(palette)}
+								>
+									<span className="text-[10px] font-bold tracking-[0.04em] uppercase" style={{ color: "var(--text-muted)" }}>Recommended</span>
+									<span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold">{palette.name}</span>
+									<div className="grid h-12 w-full grid-cols-6 overflow-hidden rounded-md border" style={{ borderColor: "var(--border-subtle)" }}>
+										{palette.strips.slice(0, 6).map((strip) => (
+											<span key={`${palette.id}-${strip.key}`} className="block h-full w-full" style={{ background: strip.color }} />
+										))}
+									</div>
+									<div className="grid w-full grid-cols-3 gap-1 text-[10px]">
+										{palette.strips.slice(0, 3).map((strip) => (
+											<span key={`${palette.id}-${strip.key}-meta`} className="truncate rounded px-1.5 py-0.5" style={{ background: "var(--bg-color)", color: "var(--text-muted)" }}>
+												{strip.key}
+											</span>
+										))}
+									</div>
+									<span className="mt-auto text-[10px]" style={{ color: "var(--text-muted)" }}>{palette.theme === "dark" ? "Dark UI" : "Light UI"}</span>
+								</button>
+							))}
+							{savedPaletteCards.map((palette) => {
+								if (palette.type === "empty-saved") {
+									return (
+										<div
+											key={palette.id}
+											className="flex min-h-[152px] flex-col items-start gap-2 rounded-md border border-dashed p-3 text-left opacity-75"
+											style={{
+												borderColor: "var(--border-color)",
+												background: "var(--header-bg)",
+												color: "var(--text-color)",
+											}}
+										>
+											<span className="text-[10px] font-bold tracking-[0.04em] uppercase" style={{ color: "var(--text-muted)" }}>Saved</span>
+											<span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-semibold">No saved palette</span>
+											<span className="mt-auto text-[10px]" style={{ color: "var(--text-muted)" }}>Save current palette to fill this slot</span>
+										</div>
+									);
+								}
+
+								return (
+									<button
+										key={palette.id}
+										type="button"
+										className="flex min-h-[152px] flex-col items-start gap-2 rounded-md border p-3 text-left transition hover:-translate-y-px"
+										style={{
+											borderColor: "var(--border-color)",
+											background: "var(--header-bg)",
+											color: "var(--text-color)",
+										}}
+										onClick={() => handleApplyGalleryPalette(palette)}
+									>
+										<span className="text-[10px] font-bold tracking-[0.04em] uppercase" style={{ color: "var(--text-muted)" }}>Saved</span>
+										<span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold">{palette.name}</span>
+										<div className="grid h-12 w-full grid-cols-6 overflow-hidden rounded-md border" style={{ borderColor: "var(--border-subtle)" }}>
+											{palette.strips.slice(0, 6).map((strip) => (
+												<span key={`${palette.id}-${strip.key}`} className="block h-full w-full" style={{ background: strip.color }} />
+											))}
+										</div>
+										<div className="grid w-full grid-cols-3 gap-1 text-[10px]">
+											{palette.strips.slice(0, 3).map((strip) => (
+												<span key={`${palette.id}-${strip.key}-meta`} className="truncate rounded px-1.5 py-0.5" style={{ background: "var(--bg-color)", color: "var(--text-muted)" }}>
+													{strip.key}
+												</span>
+											))}
+										</div>
+										<span className="mt-auto text-[10px]" style={{ color: "var(--text-muted)" }}>Tap to apply</span>
+									</button>
+								);
+							})}
+						</div>
 					</div>
 				</div>
 

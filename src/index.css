@@ -1529,6 +1529,21 @@ body {
 .de-stat--added { color: var(--accent-green); font-weight: 600; }
 .de-stat--removed { color: var(--accent-red); font-weight: 600; }
 
+.de-merge-full {
+  height: 100%;
+}
+.de-merge-full .cm-mergeView,
+.de-merge-full .cm-mergeViewEditors,
+.de-merge-full .cm-mergeViewEditor {
+  height: 100%;
+}
+.de-merge-full .cm-editor {
+  height: 100%;
+}
+.de-merge-full .cm-scroller {
+  overflow: auto;
+}
+
 .de-lang-picker { position: relative; }
 .de-lang-dropdown {
   position: absolute;

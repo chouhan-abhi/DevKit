@@ -134,10 +134,12 @@ export default function DualEditableDiff() {
 	}, [setContent, showToast]);
 
 	const shortcuts = useMemo(() => ({
+		newDoc: { mod: true, shift: true, key: "n" },
 		swap: { mod: true, shift: true, key: "x" },
 	}), []);
 
 	useKeyboardShortcuts([
+		{ shortcut: shortcuts.newDoc, action: () => createDoc("Diff Document", { left: "// Left editor", right: "// Right editor" }) },
 		{ shortcut: shortcuts.swap, action: swapSides },
 	]);
 
@@ -212,23 +214,23 @@ export default function DualEditableDiff() {
 			</div>
 
 			<div className="flex-1 min-h-0 overflow-hidden border rounded-xl m-3 mt-0" style={{ borderColor: "var(--border-color)" }}>
-			<CodeMirrorMerge
-				key={language}
-				theme={editorTheme}
-				orientation="a-b"
-				className="h-full"
-			>
-				<Original
-					value={leftCode}
-					extensions={extensions}
-					onChange={(value) => setContent((prev) => ({ ...(prev || {}), left: value ?? "" }))}
-				/>
-				<Modified
-					value={rightCode}
-					extensions={extensions}
-					onChange={(value) => setContent((prev) => ({ ...(prev || {}), right: value ?? "" }))}
-				/>
-			</CodeMirrorMerge>
+				<CodeMirrorMerge
+					key={language}
+					theme={editorTheme}
+					orientation="a-b"
+					className="h-full de-merge-full"
+				>
+					<Original
+						value={leftCode}
+						extensions={extensions}
+						onChange={(value) => setContent((prev) => ({ ...(prev || {}), left: value ?? "" }))}
+					/>
+					<Modified
+						value={rightCode}
+						extensions={extensions}
+						onChange={(value) => setContent((prev) => ({ ...(prev || {}), right: value ?? "" }))}
+					/>
+				</CodeMirrorMerge>
 			</div>
 		</div>
 	);

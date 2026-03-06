@@ -140,11 +140,13 @@ const SvgEditor = () => {
   const extensions = useMemo(() => [xml()], []);
 
   const shortcuts = useMemo(() => ({
+    newDoc: { mod: true, shift: true, key: "n" },
     preview: { mod: true, shift: true, key: "p" },
     exportSvg: { mod: true, shift: true, key: "e" },
   }), []);
 
   useKeyboardShortcuts([
+    { shortcut: shortcuts.newDoc,    action: () => createDoc("Untitled SVG", { svg: initialSvg }) },
     { shortcut: shortcuts.preview,   action: () => setPreviewMode((v) => !v) },
     { shortcut: shortcuts.exportSvg, action: () => handleExport("svg") },
   ]);

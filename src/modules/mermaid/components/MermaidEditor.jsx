@@ -270,11 +270,13 @@ const MermaidEditor = () => {
   );
 
   const shortcuts = useMemo(() => ({
+    newDoc: { mod: true, shift: true, key: "n" },
     preview: { mod: true, shift: true, key: "p" },
     format:  { mod: true, shift: true, key: "f" },
   }), []);
 
   useKeyboardShortcuts([
+    { shortcut: shortcuts.newDoc, action: () => createDoc("Untitled Mermaid", { mermaid: initialMermaid }) },
     { shortcut: shortcuts.preview, action: () => setPreviewMode((v) => !v) },
     { shortcut: shortcuts.format,  action: formatMermaid },
   ]);

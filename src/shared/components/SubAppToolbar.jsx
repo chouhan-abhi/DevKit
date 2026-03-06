@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search, Plus, Copy, Trash2 } from "lucide-react";
+import { formatShortcut } from "../hooks/useKeyboardShortcuts";
 
 export default function SubAppToolbar({
   documents = [],
@@ -57,6 +58,7 @@ export default function SubAppToolbar({
   };
 
   const isSaving = status === "saving";
+  const newDocTooltip = `New (${formatShortcut({ mod: true, shift: true, key: "n" })})`;
 
   return (
     <div className="subapp-toolbar">
@@ -140,7 +142,7 @@ export default function SubAppToolbar({
           type="button"
           className="toolbar-btn compact"
           onClick={onNew}
-          data-tooltip="New"
+          data-tooltip={newDocTooltip}
           aria-label="New document"
         >
           <Plus size={15} />
