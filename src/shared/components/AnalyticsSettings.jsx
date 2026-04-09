@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BarChart3, Eye, EyeOff, Info, Shield, Activity } from "lucide-react";
-import { analyticsService } from "../services/AnalyticsService";
+import { analyticsService } from "../services/analyticsService";
 
 export default function AnalyticsSettings() {
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
