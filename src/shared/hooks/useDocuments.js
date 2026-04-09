@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { documentStore } from "../services/DocumentStore";
 import { apiService } from "../services/ApiService";
-import { analyticsService } from "../services/AnalyticsService";
+import { analyticsService } from "../services/analyticsService";
 
 const DEFAULT_DEBOUNCE = 500;
 

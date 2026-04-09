@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { analyticsService } from '../services/AnalyticsService';
+import { analyticsService } from '../services/analyticsService';
 
 export const useAnalytics = () => {
   return {
