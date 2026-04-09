@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search, Plus, Copy, Trash2 } from "lucide-react";
 import { formatShortcut } from "../hooks/useKeyboardShortcuts";
+import SyncStatusIndicator from "./SyncStatusIndicator";
 
 export default function SubAppToolbar({
   documents = [],
@@ -13,6 +14,10 @@ export default function SubAppToolbar({
   onDelete,
   status = "saved",
   rightActions,
+  syncStatus,
+  lastSyncError,
+  isCloudSyncEnabled,
+  onSync,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -133,6 +138,20 @@ export default function SubAppToolbar({
             {isSaving ? "Saving" : "Saved"}
           </span>
         </div>
+
+        {/* Sync Status */}
+        {(syncStatus || isCloudSyncEnabled !== undefined) && (
+          <>
+            <div className="toolbar-divider" />
+            <SyncStatusIndicator
+              syncStatus={syncStatus}
+              lastSyncError={lastSyncError}
+              isCloudSyncEnabled={isCloudSyncEnabled}
+              onSync={onSync}
+              compact
+            />
+          </>
+        )}
       </div>
 
       <div className="toolbar-divider" />

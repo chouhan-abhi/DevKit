@@ -10,24 +10,40 @@ import { ToastProvider } from "./shared/components/ToastProvider";
 import ErrorBoundary from "./shared/components/ErrorBoundary";
 import { themeManager } from "./shared/services/themeManager";
 import { storage } from "./shared/services/StorageManager";
-import { useAnalytics } from "./shared/hooks/useAnalytics";
+import { useAnalytics, useErrorAnalytics } from "./shared/hooks/useAnalytics";
 
 const SIDEBAR_KEY = "sidebar:expanded";
 
 function App() {
 	const { pathname } = useLocation();
 	const [sidebarExpanded, setSidebarExpanded] = useState(() => storage.get(SIDEBAR_KEY, true));
+	const analytics = useAnalytics();
+	
+	// Enable error tracking
+	useErrorAnalytics();
 
 	useEffect(() => {
 		themeManager.init();
 	}, []);
 
-	useAnalytics();
+	// Track route changes
+	useEffect(() => {
+		analytics.trackEvent('page_view', pathname, {
+			page: pathname,
+			timestamp: Date.now(),
+		});
+	}, [pathname, analytics]);
 
 	const toggleSidebar = () => {
 		const next = !sidebarExpanded;
 		setSidebarExpanded(next);
 		storage.set(SIDEBAR_KEY, next);
+		
+		// Track sidebar interaction
+		analytics.trackFeatureUse('sidebar_toggle', {
+			expanded: next,
+			pathname,
+		});
 	};
 
 	const sidebarApps = useMemo(() => getSidebarTools(), []);

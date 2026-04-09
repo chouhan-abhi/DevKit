@@ -7,6 +7,8 @@ import {
   Database, FileText, HardDrive, BarChart3, Trash2,
 } from "lucide-react";
 import * as Lucide from "lucide-react";
+import CloudSyncSettings from "../../../shared/components/CloudSyncSettings";
+import AnalyticsSettings from "../../../shared/components/AnalyticsSettings";
 
 const THEMES = [
   { key: "light", label: "Light", icon: Sun, desc: "Clean & bright" },
@@ -216,6 +218,24 @@ export default function Settings() {
           View on GitHub
           <ExternalLink size={12} />
         </a>
+      </Section>
+
+      {/* Cloud Sync Section */}
+      <Section 
+        icon={Database} 
+        title="Cloud Sync" 
+        borderColor="var(--primary-color)"
+      >
+        <CloudSyncSettings />
+      </Section>
+
+      {/* Analytics Section */}
+      <Section 
+        icon={BarChart3} 
+        title="Analytics & Privacy" 
+        borderColor="var(--accent-green)"
+      >
+        <AnalyticsSettings />
       </Section>
     </div>
   );

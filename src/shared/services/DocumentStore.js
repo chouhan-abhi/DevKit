@@ -63,7 +63,7 @@ const ensureUniqueTitle = (store, appId, title, excludeId = null) => {
 const createDocInternal = (
   store,
   appId,
-  { title, content, meta, createdAt, updatedAt, id }
+  { title, content, meta, createdAt, updatedAt, id, cloudId }
 ) => {
   const docId = id || generateId();
   const safeTitle = ensureUniqueTitle(store, appId, title || "Untitled", null);
@@ -78,6 +78,7 @@ const createDocInternal = (
     meta: meta || {},
     createdAt: created,
     updatedAt: updated,
+    ...(cloudId ? { cloudId } : {}),
   };
 
   const appIndex = ensureAppIndex(store, appId);

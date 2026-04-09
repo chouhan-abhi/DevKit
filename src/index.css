@@ -2500,6 +2500,70 @@ body {
 }
 
 /* ───────────────────────────────────────────────────── */
+/* Journal App Enhancements                               */
+/* ───────────────────────────────────────────────────── */
+
+.journal-scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+.journal-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.journal-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.journal-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.journal-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Touch-friendly calendar buttons */
+.journal-calendar-day {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+@media (max-width: 768px) {
+  .journal-calendar-day {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Timeline day hover effects */
+.journal-timeline-day {
+  transition: all 0.2s ease;
+}
+
+.journal-timeline-day:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.journal-timeline-day:hover .journal-day-circle {
+  transform: scale(1.1);
+}
+
+.journal-timeline-day:active {
+  transform: translateY(0px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.journal-day-circle {
+  transition: all 0.2s ease;
+}
+
+/* ───────────────────────────────────────────────────── */
 /* JS Playground – Editor & Console Enhancements         */
 /* ───────────────────────────────────────────────────── */
 
