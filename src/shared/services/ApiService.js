@@ -58,19 +58,31 @@ class ApiService {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
+    console.log(`[ApiService] Making request to: ${url}`, {
+      method: options.method || 'GET',
+      headers: { ...headers, Authorization: this.token ? `Bearer ${this.token.substring(0, 10)}...` : 'none' },
+      hasBody: !!options.body
+    });
+
     try {
       const response = await fetch(url, {
         ...options,
         headers,
       });
 
+      console.log(`[ApiService] Response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`[ApiService] Error response:`, errorText);
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log(`[ApiService] Response data:`, data);
+      return data;
     } catch (error) {
-      console.error("API Request failed:", error);
+      console.error(`[ApiService] Request failed for ${url}:`, error);
       throw error;
     }
   }
@@ -82,12 +94,12 @@ class ApiService {
     return await this.request("/api/documents", {
       method: "POST",
       body: JSON.stringify({
+        id: document.id,
         appId,
-        document: {
-          ...document,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+        title: document.title || 'Untitled',
+        content: document.content || '',
+        type: document.type,
+        metadata: document.metadata,
       }),
     });
   }
@@ -98,8 +110,10 @@ class ApiService {
     return await this.request(`/api/documents/${documentId}`, {
       method: "PUT",
       body: JSON.stringify({
-        ...updates,
-        updatedAt: new Date().toISOString(),
+        title: updates.title,
+        content: updates.content,
+        type: updates.type,
+        metadata: updates.metadata,
       }),
     });
   }
@@ -175,11 +189,43 @@ class ApiService {
   // Health check
   async checkConnection() {
     try {
-      const response = await this.request("/api/health");
-      return { connected: true, response };
+      console.log(`[ApiService] Testing connection to: ${this.baseUrl}`);
+      
+      // Try a simple endpoint first - the token creation endpoint
+      const response = await fetch(`${this.baseUrl}/api/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      
+      console.log(`[ApiService] Connection test response: ${response.status}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[ApiService] Connection successful, got token:`, data.token?.substring(0, 10) + '...');
+        return { connected: true, response: data };
+      } else {
+        const errorText = await response.text();
+        console.error(`[ApiService] Connection failed:`, errorText);
+        return { connected: false, error: `${response.status} ${response.statusText}: ${errorText}` };
+      }
     } catch (error) {
+      console.error(`[ApiService] Connection test failed:`, error);
       return { connected: false, error: error.message };
     }
+  }
+
+  // Test method to verify API is working
+  async testApi() {
+    console.log(`[ApiService] Testing API configuration:`);
+    console.log(`- Base URL: ${this.baseUrl}`);
+    console.log(`- Token: ${this.token ? this.token.substring(0, 10) + '...' : 'none'}`);
+    console.log(`- Sync Enabled: ${this.isSyncEnabled()}`);
+    
+    const connectionTest = await this.checkConnection();
+    console.log(`- Connection Test:`, connectionTest);
+    
+    return connectionTest;
   }
 }
 

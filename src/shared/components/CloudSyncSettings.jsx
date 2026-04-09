@@ -177,6 +177,19 @@ export default function CloudSyncSettings() {
             Create New Token
           </button>
           
+          <button
+            onClick={async () => {
+              const result = await apiService.testApi();
+              console.log('API Test Result:', result);
+              alert(`API Test: ${result.connected ? 'SUCCESS' : 'FAILED'}\n${result.error || 'Connection working'}`);
+            }}
+            disabled={isLoading}
+            className="toolbar-btn"
+            style={{ opacity: isLoading ? 0.5 : 1 }}
+          >
+            Test API
+          </button>
+          
           {token && (
             <button
               onClick={handleClearToken}

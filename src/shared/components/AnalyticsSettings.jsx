@@ -85,6 +85,22 @@ export default function AnalyticsSettings() {
             </div>
           </label>
         </div>
+        
+        {analyticsEnabled && (
+          <button
+            onClick={() => {
+              console.log('Testing analytics...');
+              analyticsService.trackEvent('test_event', '/settings', {
+                test: true,
+                timestamp: Date.now()
+              });
+              alert('Test analytics event sent! Check browser console for details.');
+            }}
+            className="toolbar-btn mt-3"
+          >
+            Test Analytics
+          </button>
+        )}
       </div>
 
       {/* Session Information */}

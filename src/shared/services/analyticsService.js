@@ -261,9 +261,16 @@ class AnalyticsService {
   async sendEvent(event, synchronous = false) {
     const url = `${API_CONFIG.BASE_URL}/api/analytics/visit`;
     
+    console.log(`[AnalyticsService] Sending event to: ${url}`, {
+      eventType: event.eventType,
+      path: event.path,
+      synchronous
+    });
+    
     if (synchronous && navigator.sendBeacon) {
       // Use sendBeacon for reliable delivery on page unload
       const success = navigator.sendBeacon(url, JSON.stringify(event));
+      console.log(`[AnalyticsService] sendBeacon result:`, success);
       if (!success) {
         throw new Error('sendBeacon failed');
       }
@@ -271,20 +278,29 @@ class AnalyticsService {
     }
 
     // Regular fetch for async sending
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(event),
-      keepalive: synchronous, // Keep connection alive for unload events
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(event),
+        keepalive: synchronous, // Keep connection alive for unload events
+      });
 
-    if (!response.ok) {
-      throw new Error(`Analytics request failed: ${response.status} ${response.statusText}`);
+      console.log(`[AnalyticsService] Response status: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[AnalyticsService] Error response:`, errorText);
+        throw new Error(`Analytics request failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      return response;
+    } catch (error) {
+      console.error(`[AnalyticsService] Send event failed:`, error);
+      throw error;
     }
-
-    return response;
   }
 
   // Configuration methods

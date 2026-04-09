@@ -5,10 +5,10 @@
 
 // Replace with your actual crawler backend URL
 export const API_CONFIG = {
-  // For local development
+  // For local development - update these URLs to match your actual backend
   BASE_URL: process.env.NODE_ENV === 'development' 
     ? 'http://localhost:8787' 
-    : 'https://your-crawler-backend.workers.dev',
+    : 'https://crawler.chouhan-abhi.workers.dev',
   
   // API endpoints
   ENDPOINTS: {
@@ -16,6 +16,7 @@ export const API_CONFIG = {
     TOKEN: '/api/token',
     DOCUMENTS: '/api/documents',
     CONFIG: '/api/config',
+    ANALYTICS: '/api/analytics/visit',
   },
   
   // Request settings
