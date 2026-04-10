@@ -6,9 +6,7 @@
 // Replace with your actual crawler backend URL
 export const API_CONFIG = {
   // For local development - update these URLs to match your actual backend
-  BASE_URL: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:8787' 
-    : 'https://crawler.chouhan-abhi.workers.dev',
+  BASE_URL: 'https://dracket.art',
   
   // API endpoints
   ENDPOINTS: {
