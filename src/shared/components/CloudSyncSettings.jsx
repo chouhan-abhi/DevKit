@@ -339,6 +339,36 @@ export default function CloudSyncSettings() {
         </div>
       )}
 
+      {/* CORS Error Help */}
+      {error && error.includes('CORS') && (
+        <div className="p-3 border rounded-lg" style={{ 
+          borderColor: "var(--accent-orange)",
+          background: `color-mix(in srgb, var(--accent-orange) 5%, transparent)`
+        }}>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle size={16} style={{ color: "var(--accent-orange)" }} />
+            <h4 className="font-medium text-sm" style={{ color: "var(--text-color)" }}>
+              CORS Configuration Required
+            </h4>
+          </div>
+          <div className="text-xs space-y-2" style={{ color: "var(--text-muted)" }}>
+            <p>
+              The backend server needs to allow requests from <code>https://devkit.dracket.art</code>
+            </p>
+            <p>
+              <strong>Backend Fix:</strong> Add this origin to your <code>ALLOWED_ORIGINS</code> environment variable:
+            </p>
+            <code className="block p-2 rounded text-xs" style={{ 
+              background: "var(--panel-color)", 
+              color: "var(--text-color)",
+              fontFamily: "monospace"
+            }}>
+              ALLOWED_ORIGINS=https://devkit.dracket.art,https://localhost:3000
+            </code>
+          </div>
+        </div>
+      )}
+
       {/* Help Text */}
       <div className="text-xs space-y-2" style={{ color: "var(--text-muted)" }}>
         <p>

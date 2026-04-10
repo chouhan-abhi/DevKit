@@ -48,7 +48,13 @@ class ApiService {
 
   // HTTP request helper
   async request(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
+    let url = `${this.baseUrl}${endpoint}`;
+    
+    // Use CORS proxy if enabled (for testing only)
+    if (API_CONFIG.USE_CORS_PROXY && !url.includes('localhost')) {
+      url = `https://cors-anywhere.herokuapp.com/${url}`;
+      console.log(`[ApiService] Using CORS proxy for: ${url}`);
+    }
     const headers = {
       "Content-Type": "application/json",
       ...options.headers,

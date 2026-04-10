@@ -10,6 +10,9 @@ export const API_CONFIG = {
     ? 'http://localhost:8787' 
     : 'https://dracket.art',
   
+  // CORS Proxy for testing (remove when backend CORS is fixed)
+  USE_CORS_PROXY: false, // Set to true if you need to bypass CORS for testing
+  
   // API endpoints
   ENDPOINTS: {
     HEALTH: '/api/health',
