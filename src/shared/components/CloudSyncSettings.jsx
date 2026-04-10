@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Cloud, CloudOff, RotateCw, Key, Check, X, AlertCircle, Loader2 } from "lucide-react";
+import { Cloud, CloudOff, RotateCw, Key, Check, X, AlertCircle, Loader2, Server } from "lucide-react";
 import { apiService } from "../services/ApiService";
+import { API_CONFIG } from "../../config/api";
 
 export default function CloudSyncSettings() {
   const [token, setToken] = useState("");
@@ -9,14 +10,17 @@ export default function CloudSyncSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [backendUrl, setBackendUrl] = useState("");
 
   useEffect(() => {
     // Initialize with current settings
     const currentToken = apiService.getToken();
     const currentSyncEnabled = apiService.isSyncEnabled();
+    const storedUrl = localStorage.getItem('devkit_api_base_url') || API_CONFIG.BASE_URL;
     
     setToken(currentToken || "");
     setSyncEnabled(currentSyncEnabled);
+    setBackendUrl(storedUrl);
     
     if (currentToken && currentSyncEnabled) {
       checkConnection();
@@ -103,6 +107,23 @@ export default function CloudSyncSettings() {
     setTimeout(() => setStatus(""), 3000);
   };
 
+  const handleUpdateBackendUrl = () => {
+    if (backendUrl.trim()) {
+      localStorage.setItem('devkit_api_base_url', backendUrl.trim());
+      // Update the API service base URL
+      apiService.baseUrl = backendUrl.trim();
+      setStatus("Backend URL updated. Please refresh the page.");
+      setTimeout(() => setStatus(""), 5000);
+    }
+  };
+
+  const handleResetBackendUrl = () => {
+    localStorage.removeItem('devkit_api_base_url');
+    setBackendUrl(API_CONFIG.BASE_URL);
+    setStatus("Backend URL reset to default. Please refresh the page.");
+    setTimeout(() => setStatus(""), 5000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -133,6 +154,53 @@ export default function CloudSyncSettings() {
            syncEnabled ? "Sync enabled but not connected" :
            "Cloud sync disabled"}
         </span>
+      </div>
+
+      {/* Backend URL Configuration */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+          Backend URL
+        </h4>
+        
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <input
+              type="url"
+              value={backendUrl}
+              onChange={(e) => setBackendUrl(e.target.value)}
+              placeholder="https://your-backend.workers.dev"
+              className="w-full px-3 py-2 text-sm border rounded"
+              style={{
+                background: "var(--panel-color)",
+                borderColor: "var(--border-color)",
+                color: "var(--text-color)",
+              }}
+            />
+          </div>
+          <button
+            onClick={handleUpdateBackendUrl}
+            disabled={isLoading || !backendUrl.trim()}
+            className="toolbar-btn"
+            style={{ opacity: isLoading || !backendUrl.trim() ? 0.5 : 1 }}
+          >
+            <Server size={14} />
+            Update
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleResetBackendUrl}
+            className="toolbar-btn"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Reset to Default
+          </button>
+          
+          <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Current: {apiService.baseUrl || API_CONFIG.BASE_URL}
+          </div>
+        </div>
       </div>
 
       {/* Token Management */}
