@@ -99,7 +99,7 @@ export default function Sidebar({ sidebarApps, homeTool, pathname, expanded, onT
 					{groupedApps.map(([category, categoryTools]) => (
 						<div key={category}>
 							{expanded && (
-								<div className="sidebar-section-label">
+								<div className="sidebar-section-label animate-slideIn">
 									{CATEGORY_LABELS[category] || category}
 								</div>
 							)}

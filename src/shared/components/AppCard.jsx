@@ -7,7 +7,7 @@ export default function AppCard({ app }) {
   return (
     <Link
       to={`/${app.key}`}
-      className="group flex items-center gap-3 p-3 rounded-lg border transition-colors duration-120"
+      className="app-card group flex items-center gap-3 p-3 rounded-lg border transition-colors duration-120 component-enter clickable"
       style={{
         background: "var(--panel-color)",
         borderColor: "var(--border-color)",

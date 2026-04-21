@@ -8,6 +8,7 @@ import Loader from "./shared/components/Loader";
 import AppHeader from "./shared/components/AppHeader";
 import { ToastProvider } from "./shared/components/ToastProvider";
 import ErrorBoundary from "./shared/components/ErrorBoundary";
+import PageTransition from "./shared/components/PageTransition";
 import { themeManager } from "./shared/services/themeManager";
 import { storage } from "./shared/services/StorageManager";
 import { useAnalytics, useErrorAnalytics } from "./shared/hooks/useAnalytics";
@@ -85,10 +86,12 @@ function App() {
 					>
 						{!isHome && <AppHeader />}
 
-						<div className="flex-1">
+						<div className="flex-1 page-transition-container">
 							<ErrorBoundary>
 								<Suspense fallback={<Loader />}>
-									<AppRoutes />
+									<PageTransition>
+										<AppRoutes />
+									</PageTransition>
 								</Suspense>
 							</ErrorBoundary>
 						</div>

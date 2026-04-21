@@ -302,18 +302,27 @@ body {
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: 
+    background var(--transition-fast), 
+    color var(--transition-fast),
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
   white-space: nowrap;
   position: relative;
+  will-change: transform, background;
 }
 
 .toolbar-btn:hover {
   background: var(--border-subtle);
   color: var(--text-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-btn:active {
   background: var(--border-color);
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-btn.primary {
@@ -1204,9 +1213,10 @@ body {
 }
 
 /* ───────────────────────────────────────────────────── */
-/* Animations                                            */
+/* Animations & Native App Feel                          */
 /* ───────────────────────────────────────────────────── */
 
+/* Core Animation Keyframes */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1227,9 +1237,35 @@ body {
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes slideInLeft {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(-12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 @keyframes scaleIn {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scaleInBounce {
+  from { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideOutLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-20px); opacity: 0; }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(20px); opacity: 0; }
 }
 
 @keyframes shimmer {
@@ -1237,10 +1273,51 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes pressDown {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* Animation Classes */
 .animate-fadeInUp { animation: fadeInUp 0.4s ease-out forwards; }
 .animate-slideIn  { animation: slideIn 0.25s ease-out forwards; }
+.animate-slideInLeft  { animation: slideInLeft 0.3s ease-out forwards; }
+.animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
+.animate-slideInDown  { animation: slideInDown 0.25s ease-out forwards; }
 .animate-fadeIn   { animation: fadeIn 0.3s ease-out forwards; }
 .animate-scaleIn  { animation: scaleIn 0.2s ease-out forwards; }
+.animate-scaleInBounce { animation: scaleInBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+.animate-slideOutLeft { animation: slideOutLeft 0.25s ease-in forwards; }
+.animate-slideOutRight { animation: slideOutRight 0.25s ease-in forwards; }
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }
+.animate-shake { animation: shake 0.5s ease-in-out; }
+.animate-press { animation: pressDown 0.15s ease-out; }
+
+/* Page Transition Container */
+.page-transition-container {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Panel Transitions */
+.panel-slide-enter {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.panel-slide-exit {
+  animation: slideOutRight 0.25s ease-in forwards;
+}
 
 /* ───────────────────────────────────────────────────── */
 /* Accent Classes                                        */
@@ -1261,7 +1338,19 @@ body {
 
 .app-main {
   margin-left: 0;
-  transition: margin-left var(--transition-normal);
+  transition: 
+    margin-left var(--transition-normal),
+    transform 0.15s ease;
+}
+
+/* Native App-like Transitions */
+.app-main > .flex-1 {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Page content animation */
+.app-main .page-content {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @media (min-width: 768px) {
@@ -1284,8 +1373,12 @@ body {
   flex-direction: column;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border-color);
-  transition: width var(--transition-normal);
+  transition: 
+    width var(--transition-normal),
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s ease;
   overflow: hidden;
+  will-change: width, transform;
 }
 
 .sidebar--collapsed { width: var(--sidebar-width-collapsed); }
@@ -1331,14 +1424,24 @@ body {
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: 
+    background var(--transition-fast), 
+    color var(--transition-fast),
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
   position: relative;
   cursor: pointer;
+  will-change: transform, background, color;
 }
 
 .sidebar-nav-item:hover {
   background: var(--sidebar-hover);
   color: var(--text-color);
+  transform: translateX(2px);
+}
+
+.sidebar-nav-item:active {
+  transform: translateX(0px) scale(0.98);
 }
 
 .sidebar-nav-item--active {
@@ -2701,4 +2804,193 @@ body {
   width: 14px;
   height: 14px;
   accent-color: var(--primary-color);
+}
+
+/* ───────────────────────────────────────────────────── */
+/* Enhanced Native App Animations                        */
+/* ───────────────────────────────────────────────────── */
+
+/* Global Interactive Elements */
+button, 
+.button,
+.toolbar-btn,
+.sidebar-nav-item,
+.sidebar-recent-item,
+.app-card {
+  transition: 
+    transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+  will-change: transform;
+}
+
+/* Card Hover Effects */
+.app-card:hover,
+[class*="card"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.app-card:active,
+[class*="card"]:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+/* Form Input Animations */
+input, 
+textarea, 
+select {
+  transition: 
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform 0.1s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+}
+
+/* Dropdown and Popover Animations */
+.toolbar-dropdown,
+.toolbar-popover,
+.jspl-template-menu {
+  animation: scaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top;
+}
+
+/* Modal and Overlay Animations */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.modal-content {
+  animation: scaleInBounce 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* Toast Animation Enhancement */
+.app-toast {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.app-toast.toast-exit {
+  animation: slideOutRight 0.25s ease-in forwards;
+}
+
+/* Sidebar Navigation Staggered Animation */
+.sidebar-nav-item:nth-child(1) { animation-delay: 0ms; }
+.sidebar-nav-item:nth-child(2) { animation-delay: 50ms; }
+.sidebar-nav-item:nth-child(3) { animation-delay: 100ms; }
+.sidebar-nav-item:nth-child(4) { animation-delay: 150ms; }
+.sidebar-nav-item:nth-child(5) { animation-delay: 200ms; }
+.sidebar-nav-item:nth-child(6) { animation-delay: 250ms; }
+
+/* Page Loading States */
+.page-loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Smooth scrolling for native feel */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced focus states */
+*:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Panel transitions */
+.panel-enter {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.panel-exit {
+  animation: slideOutLeft 0.25s ease-in forwards;
+}
+
+/* Micro-interactions for better feedback */
+.clickable:active {
+  transform: scale(0.98);
+}
+
+/* Loading spinner enhancement */
+.loader-spinner {
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Tab switching animations */
+.tab-content {
+  animation: fadeInUp 0.25s ease-out forwards;
+}
+
+/* Contextual animations */
+.success-feedback {
+  animation: scaleInBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.error-feedback {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Faster animations on mobile */
+  .app-main,
+  .sidebar,
+  .page-transition-container {
+    transition-duration: 0.2s;
+  }
+  
+  /* Reduced motion for performance */
+  .sidebar-nav-item:hover {
+    transform: none;
+  }
+  
+  /* Touch-friendly interactions */
+  .toolbar-btn:hover {
+    transform: none;
+  }
+  
+  .toolbar-btn:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto;
+  }
+}
+
+/* Enhanced component transitions */
+.component-enter {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.component-exit {
+  opacity: 1;
+  transform: translateY(0);
+  animation: slideOutLeft 0.2s ease-in forwards;
+}
+
+/* Stagger animations for lists */
+.list-item:nth-child(odd) {
+  animation-delay: 0ms;
+}
+
+.list-item:nth-child(even) {
+  animation-delay: 50ms;
 }

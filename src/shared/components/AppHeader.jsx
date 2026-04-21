@@ -12,7 +12,7 @@ export default function AppHeader() {
 
 	return (
 		<header
-			className="flex items-center gap-2 px-6 py-3 text-sm"
+			className="flex items-center gap-2 px-6 py-3 text-sm animate-slideInDown"
 			style={{ color: "var(--text-muted)" }}
 		>
 			<Link
